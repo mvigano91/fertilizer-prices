@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /c/Users/MARTA/AppData/Local/Temp/claude/C--Users-MARTA-Python-ClaudeCodeTest/5194ef26-0a26-4b23-b768-0e6dc00fe9e4/scratchpad/fonts)",
+      "Read(//c/Users/MARTA/AppData/Local/Temp/claude/C--Users-MARTA-Python-ClaudeCodeTest/5194ef26-0a26-4b23-b768-0e6dc00fe9e4/scratchpad/**)",
+      "Bash(curl -s -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0 Safari/537.36\" \"https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=JetBrains+Mono:wght@400;600&display=swap\" -o fonts.css)",
+      "Bash(curl -s -o caveat700.woff2 \"https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjRV6eIWpYQ.woff2\")",
+      "Bash(curl -s -o jbmono400.woff2 \"https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2\")",
+      "Bash(curl -s -o jbmono600.woff2 \"https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2\")",
+      "Bash(awk '/font-weight: 600/{w=1} w && /latin \\\\*\\\\// {c++} w && c==1 && /src:/{print; exit}' fonts.css)",
+      "Bash(base64 -w0 caveat700.woff2)",
+      "Bash(base64 -w0 jbmono400.woff2)",
+      "Bash(python3 -c ' *)",
+      "Artifact",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git config *)"
+    ]
+  }
+}
