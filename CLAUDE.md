@@ -29,5 +29,6 @@ This repo has no CI or deploy step, but the user works on it from more than one 
 - Write clean, specific commit messages describing what changed and why (not "update" or "wip").
 - Push to the `origin` remote after committing, so history is backed up off this machine and available to the other one.
 - Never use `git push --force`, `git reset --hard`, or rewrite published history without explicit confirmation.
+- When the user writes "buonanotte", that signals the end of the session: commit any outstanding work (with a clean, specific message) and push to `origin` before ending, so nothing is left uncommitted between sessions.
 
 The `origin` remote is configured at https://github.com/mvigano91/fertilizer-prices.git.
