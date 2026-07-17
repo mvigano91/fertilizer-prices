@@ -22,11 +22,12 @@ When editing this file, keep it a single self-contained HTML document (no extern
 
 ## Git workflow
 
-This repo has no CI, deploy step, or collaborators to coordinate with, so the git workflow exists purely so work is never lost. As you make changes:
+This repo has no CI or deploy step, but the user works on it from more than one computer, so the git workflow exists purely so work is never lost or diverges between machines. As you make changes:
 
+- Run `git pull` at the start of a session, before making any changes, so you're working on top of the latest commits from any other machine.
 - Commit after each meaningful, working change — don't let uncommitted work pile up across sessions.
 - Write clean, specific commit messages describing what changed and why (not "update" or "wip").
-- Push to the `origin` remote after committing, once a remote is configured, so history is backed up off this machine.
+- Push to the `origin` remote after committing, so history is backed up off this machine and available to the other one.
 - Never use `git push --force`, `git reset --hard`, or rewrite published history without explicit confirmation.
 
-There is currently no GitHub remote configured — commits are local-only until one is added.
+The `origin` remote is configured at https://github.com/mvigano91/fertilizer-prices.git.
