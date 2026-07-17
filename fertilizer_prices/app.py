@@ -136,7 +136,9 @@ class FertilizerApp:
 
     def _plot(self, series):
         self.ax.clear()
-        self.ax.plot(series.index, series.values, marker="o", markersize=3)
+        self.ax.grid(True, color="gray", alpha=0.3, linestyle="--", linewidth=0.7, zorder=0)
+        self.ax.set_axisbelow(True)
+        self.ax.plot(series.index, series.values, marker="o", markersize=3, zorder=3)
         self.ax.set_title(f"{self.product_var.get()} — {self.source_var.get()}")
         ylabel = "Variazione %" if self.mode_var.get() == "Variazione %" else "Prezzo / Indice"
         self.ax.set_ylabel(ylabel)
