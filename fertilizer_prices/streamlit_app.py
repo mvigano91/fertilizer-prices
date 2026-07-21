@@ -16,10 +16,10 @@ st.markdown(
         font-size: 0.85rem;
     }
     section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-        gap: 0.15rem;
+        gap: 0.05rem;
     }
     .series-gap {
-        margin-top: 0.9rem;
+        margin-top: 1.6rem;
     }
     </style>
     """,
@@ -42,7 +42,7 @@ if "num_series" not in st.session_state:
 def _series_controls(label, first=False):
     if not first:
         st.markdown('<div class="series-gap"></div>', unsafe_allow_html=True)
-    col_label, col_axis = st.columns([1, 2])
+    col_label, col_axis, col_pad = st.columns([1, 2, 1])
     with col_label:
         st.markdown(f"**{label}**")
     with col_axis:
@@ -50,10 +50,23 @@ def _series_controls(label, first=False):
             "Asse", options=["L", "R"], default="L", key=f"axis_{label}",
             label_visibility="collapsed",
         )
+    with col_pad:
+        is_pad = st.checkbox("Pad", key=f"pad_{label}")
+
+    if is_pad:
+        formula = st.text_input(
+            "Pad", key=f"formula_{label}", placeholder="es. S1 - S2, S1 * 100",
+            label_visibility="collapsed",
+        )
+        return {"label": label, "axis": axis, "is_pad": True, "formula": formula, "mode": None}
+
     source = st.selectbox("Fonte dati", list(data.SOURCES.keys()), key=f"source_{label}")
     product = st.selectbox("Prodotto", list(data.SOURCES[source].keys()), key=f"product_{label}")
     mode = st.selectbox("Tipo di valore", data.MODES, key=f"mode_{label}")
-    return {"label": label, "source": source, "product": product, "mode": mode, "axis": axis}
+    return {
+        "label": label, "axis": axis, "is_pad": False,
+        "source": source, "product": product, "mode": mode,
+    }
 
 
 with st.sidebar:
@@ -67,6 +80,7 @@ with st.sidebar:
         for i in range(1, st.session_state["num_series"] + 1)
     ]
 
+    st.markdown('<div class="series-gap"></div>', unsafe_allow_html=True)
     add_col, remove_col = st.columns(2)
     with add_col:
         if st.button("+ Aggiungi serie", use_container_width=True):
@@ -103,6 +117,10 @@ def _validate_years(years_text, series_list):
     years_back = int(years_text)
 
     for s in series_list:
+        if s["is_pad"]:
+            if not s["formula"].strip():
+                return None, f"Inserisci una formula per {s['label']} (es. S1 - S2)."
+            continue
         max_years, error = _validate_series(s["source"], s["product"])
         if error:
             return None, error
@@ -114,6 +132,14 @@ def _validate_years(years_text, series_list):
 
 def _ylabel(mode):
     return "Variazione %" if mode == "Variazione %" else "Prezzo / Indice"
+
+
+def _series_title(r):
+    return r["formula"] if r["is_pad"] else f"{r['product']} — {r['source']}"
+
+
+def _line_label(r):
+    return f"{r['label']}: {_series_title(r)}"
 
 
 def _plot_results(ax_left, results):
@@ -129,7 +155,7 @@ def _plot_results(ax_left, results):
     for i, r in enumerate(left):
         line, = ax_left.plot(
             r["series"].index, r["series"].values, marker="o", markersize=3, zorder=3,
-            color=f"C{i}", label=f"{r['label']}: {r['product']} — {r['source']}",
+            color=f"C{i}", label=_line_label(r),
         )
         lines.append(line)
         labels.append(line.get_label())
@@ -142,7 +168,7 @@ def _plot_results(ax_left, results):
         for i, r in enumerate(right):
             line, = ax_right.plot(
                 r["series"].index, r["series"].values, marker="o", markersize=3, zorder=3,
-                color=f"C{len(left) + i}", label=f"{r['label']}: {r['product']} — {r['source']}",
+                color=f"C{len(left) + i}", label=_line_label(r),
             )
             lines.append(line)
             labels.append(line.get_label())
@@ -150,10 +176,40 @@ def _plot_results(ax_left, results):
         ax_right.set_ylabel(_ylabel(right[0]["mode"]) if len(modes) == 1 else "Valore")
 
     if len(results) == 1:
-        r = results[0]
-        ax_left.set_title(f"{r['product']} — {r['source']}")
+        ax_left.set_title(_series_title(results[0]))
 
     ax_left.legend(lines, labels, loc="best")
+
+
+def _resolve_pad_formulas(pad_series, resolved):
+    """Valuta le formule Pad (es. 'S1 - S2') usando le serie gia' risolte come variabili.
+
+    Supporta anche formule Pad che si riferiscono ad altre serie Pad, risolvendole
+    per iterazioni successive finche' non c'e' piu' progresso.
+    """
+    pending = list(pad_series)
+    while pending:
+        still_pending = []
+        progressed = False
+        for s in pending:
+            try:
+                value = eval(s["formula"], {"__builtins__": {}}, dict(resolved))
+            except NameError:
+                still_pending.append(s)
+                continue
+            except Exception as exc:
+                raise ValueError(f"Errore nella formula di {s['label']}: {exc}") from exc
+            if hasattr(value, "dropna"):
+                value = value.dropna()
+            resolved[s["label"]] = value
+            progressed = True
+        if not progressed:
+            labels = ", ".join(s["label"] for s in still_pending)
+            raise ValueError(
+                f"Impossibile calcolare {labels}: la formula fa riferimento a una serie "
+                "inesistente o c'e' un riferimento circolare."
+            )
+        pending = still_pending
 
 
 if refresh:
@@ -163,11 +219,21 @@ if refresh:
         st.session_state["chart_result"] = None
     else:
         try:
-            results = []
+            resolved = {}
             for s in series_list:
-                series = data.get_series(s["source"], s["product"], years_back, granularity, s["mode"])
-                results.append({**s, "series": series})
+                if s["is_pad"]:
+                    continue
+                resolved[s["label"]] = data.get_series(
+                    s["source"], s["product"], years_back, granularity, s["mode"],
+                )
+
+            _resolve_pad_formulas([s for s in series_list if s["is_pad"]], resolved)
+
+            results = [{**s, "series": resolved[s["label"]]} for s in series_list]
         except (data.FredApiKeyMissing, data.FredRequestError) as exc:
+            st.session_state["chart_error"] = str(exc)
+            st.session_state["chart_result"] = None
+        except ValueError as exc:
             st.session_state["chart_error"] = str(exc)
             st.session_state["chart_result"] = None
         else:
