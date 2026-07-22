@@ -6,6 +6,7 @@ Due fonti disponibili:
 """
 
 import os
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -15,6 +16,16 @@ DATA_DIR = Path(__file__).parent / "data"
 PINK_SHEET_PATH = DATA_DIR / "CMO-Historical-Data-Monthly.xlsx"
 
 FRED_OBSERVATIONS_URL = "https://api.stlouisfed.org/fred/series/observations"
+
+# Pagina da cui si fa scraping del link di download del file Pink Sheet: l'URL del file
+# stesso (thedocs.worldbank.org/.../CMO-Historical-Data-Monthly.xlsx) contiene un hash di
+# versione che cambia ad ogni pubblicazione, quindi non e' referenziabile direttamente e va
+# individuato di volta in volta cercandolo in questa pagina.
+COMMODITY_MARKETS_PAGE = "https://www.worldbank.org/en/research/commodity-markets"
+_XLSX_LINK_RE = re.compile(
+    r"https://thedocs\.worldbank\.org/[^\"'<>\s]*?CMO-Historical-Data-Monthly\.xlsx"
+)
+_HTTP_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 # Etichetta prodotto (mostrata in GUI) -> colonna nel file Pink Sheet
 PINK_SHEET_PRODUCTS = {
@@ -56,7 +67,41 @@ class FredRequestError(Exception):
     pass
 
 
+class PinkSheetRefreshError(Exception):
+    pass
+
+
 _pink_sheet_cache = None
+
+
+def refresh_pink_sheet_file() -> None:
+    """Scarica l'ultima versione del file Pink Sheet dal sito World Bank e sovrascrive
+    il file locale, poi invalida la cache in memoria cosi' la prossima lettura prende i
+    dati appena scaricati."""
+    try:
+        page = requests.get(COMMODITY_MARKETS_PAGE, timeout=20, headers=_HTTP_HEADERS)
+        page.raise_for_status()
+    except requests.RequestException as exc:
+        raise PinkSheetRefreshError(f"Impossibile raggiungere il sito World Bank: {exc}") from exc
+
+    match = _XLSX_LINK_RE.search(page.text)
+    if not match:
+        raise PinkSheetRefreshError(
+            "Non ho trovato il link al file Excel nella pagina World Bank: "
+            "la struttura del sito potrebbe essere cambiata."
+        )
+
+    try:
+        file_response = requests.get(match.group(0), timeout=30, headers=_HTTP_HEADERS)
+        file_response.raise_for_status()
+    except requests.RequestException as exc:
+        raise PinkSheetRefreshError(f"Download del file Excel fallito: {exc}") from exc
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    PINK_SHEET_PATH.write_bytes(file_response.content)
+
+    global _pink_sheet_cache
+    _pink_sheet_cache = None
 
 
 def load_pink_sheet_prices() -> pd.DataFrame:

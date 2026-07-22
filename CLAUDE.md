@@ -62,13 +62,14 @@ The FRED data source requires a free `FRED_API_KEY` (https://fred.stlouisfed.org
   - `build_residuals_figure(...)` — residuals (actual − fitted) over time, bar chart with a zero reference line.
 - `regression.py` — pure numpy/pandas OLS, no Streamlit/Plotly imports: `fit_multilinear_ols(y, x_list)` aligns series on their common dates (inner join + dropna) and solves via `numpy.linalg.lstsq`; `format_equation(...)` renders the fitted equation as text.
 - Streamlit's dev-server file watcher only re-executes `streamlit_app.py` itself on save — it does **not** reload already-imported local modules (`series_config`/`charting`/`regression`) in a running process. After editing those modules, fully stop and restart the `streamlit run` process (not just save-and-refresh), or edits will silently keep running on stale cached module code.
-- `data/CMO-Historical-Data-Monthly.xlsx` — local snapshot of the World Bank Pink Sheet, downloaded once. The World Bank's download URL changes periodically (it embeds a report-version hash) — refresh this file manually by re-downloading from https://www.worldbank.org/en/research/commodity-markets when newer data is needed.
+- `data/CMO-Historical-Data-Monthly.xlsx` — local snapshot of the World Bank Pink Sheet. The World Bank's download URL changes periodically (it embeds a report-version hash), so it can't be hardcoded: `data.refresh_pink_sheet_file()` scrapes https://www.worldbank.org/en/research/commodity-markets for the current link, downloads it, overwrites this file, and clears `data.py`'s in-memory cache. Exposed in the Streamlit sidebar as the "Aggiorna dati World Bank" button (`series_config.py`). Since this file is committed to the repo, refreshing it locally leaves the change uncommitted — see the git workflow note below.
 
 ## Git workflow
 
 This repo has no CI or deploy step, but the user works on it from more than one computer, so the git workflow exists purely so work is never lost or diverges between machines. As you make changes:
 
 - Run `git pull` at the start of a session, before making any changes, so you're working on top of the latest commits from any other machine.
+- If `data/CMO-Historical-Data-Monthly.xlsx` shows as modified (e.g. after clicking "Aggiorna dati World Bank" in the Streamlit sidebar), commit and push it like any other change — otherwise the refreshed data stays stuck on this machine and the other one keeps using stale prices.
 - Commit after each meaningful, working change — don't let uncommitted work pile up across sessions.
 - Write clean, specific commit messages describing what changed and why (not "update" or "wip").
 - Push to the `origin` remote after committing, so history is backed up off this machine and available to the other one.

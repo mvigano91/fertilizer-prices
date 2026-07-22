@@ -54,6 +54,7 @@ def render_series_controls(label, first=False):
         )
 
     if is_pad:
+        st.markdown('<div class="pad-formula-gap"></div>', unsafe_allow_html=True)
         formula = st.text_input(
             "Pad", key=f"formula_{label}", placeholder="es. S1 - S2, S1 * 100",
             label_visibility="collapsed",
@@ -82,6 +83,26 @@ def render_sidebar():
         st.session_state["num_series"] = 1
 
     with st.sidebar:
+        with st.container(key="pink_sheet_refresh_container"):
+            if st.button(
+                "Aggiorna dati World Bank", key="refresh_pink_sheet", use_container_width=True,
+            ):
+                with st.spinner("Scarico l'ultimo file Pink Sheet dal sito World Bank..."):
+                    try:
+                        data.refresh_pink_sheet_file()
+                    except data.PinkSheetRefreshError as exc:
+                        st.session_state["pink_sheet_refresh_error"] = str(exc)
+                    else:
+                        st.session_state["pink_sheet_refresh_error"] = None
+                        st.session_state["pink_sheet_refresh_done"] = True
+
+        if st.session_state.get("pink_sheet_refresh_error"):
+            st.error(st.session_state["pink_sheet_refresh_error"])
+        elif st.session_state.pop("pink_sheet_refresh_done", False):
+            st.success("File Pink Sheet aggiornato.")
+
+        refresh_top = st.button("Aggiorna grafico", type="primary", key="refresh_top", use_container_width=True)
+
         years_text = st.text_input("**Anni indietro**", value="10")
         granularity = st.selectbox("**Granularita'**", data.GRANULARITIES)
 
@@ -105,9 +126,9 @@ def render_sidebar():
                     st.rerun()
 
         st.divider()
-        refresh = st.button("Aggiorna grafico", type="primary")
+        refresh_bottom = st.button("Aggiorna grafico", type="primary", key="refresh_bottom")
 
-    return years_text, granularity, series_list, refresh
+    return years_text, granularity, series_list, refresh_top or refresh_bottom
 
 
 def _validate_series(source, product):

@@ -18,13 +18,39 @@ st.markdown(
         font-size: 0.85rem;
     }
     section[data-testid="stSidebar"] > div:first-child {
-        width: 380px;
+        width: 380px !important;
     }
     section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
         gap: 0.05rem;
     }
     .series-gap {
         margin-top: 1.6rem;
+    }
+    .pad-formula-gap {
+        margin-top: 1rem;
+    }
+    div.block-container {
+        padding-top: 1.2rem;
+    }
+    h1 {
+        font-size: 1.3rem;
+        margin-bottom: 0.3rem;
+    }
+    .st-key-pink_sheet_refresh_container {
+        margin-bottom: 0.8rem;
+    }
+    .st-key-pink_sheet_refresh_container button {
+        background-color: #ffb3b3;
+        border-color: #ffb3b3;
+        color: #3a0000;
+        font-size: 0.78rem;
+        padding: 0.15rem 0.5rem;
+        min-height: 0;
+    }
+    .st-key-pink_sheet_refresh_container button:hover {
+        background-color: #ff9999;
+        border-color: #ff9999;
+        color: #3a0000;
     }
     </style>
     """,
