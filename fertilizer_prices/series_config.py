@@ -19,6 +19,22 @@ MAX_REGRESSION_X_SLOTS = 9
 
 REGRESSION_ROLE_OPTIONS = ["—", "Y"] + [f"X{i}" for i in range(1, MAX_REGRESSION_X_SLOTS + 1)]
 
+# Combina le due fonti in un unico catalogo per il dropdown "Prodotto", cosi' non serve
+# piu' scegliere prima la fonte: la sigla nel nome (" - WBPS" / " - FRED") la rende comunque
+# esplicita, e la ricerca testuale della selectbox trova tutto in un colpo solo.
+_SOURCE_ABBREV = {"World Bank Pink Sheet": "WBPS", "FRED (PPI)": "FRED"}
+
+
+def _build_product_catalog():
+    catalog = {}
+    for source, abbrev in _SOURCE_ABBREV.items():
+        for label in data.SOURCES[source]:
+            catalog[f"{label} - {abbrev}"] = (source, label)
+    return dict(sorted(catalog.items()))
+
+
+PRODUCT_CATALOG = _build_product_catalog()
+
 
 def _default_regression_role(label):
     """S1 -> 'Y', S2 -> 'X1', S3 -> 'X2', ... (solo il default iniziale: se l'utente lo
@@ -64,11 +80,11 @@ def render_series_controls(label, first=False):
             "regression_role": regression_role,
         }
 
-    source = st.selectbox("Fonte dati", list(data.SOURCES.keys()), key=f"source_{label}")
-    product = st.selectbox(
-        "Prodotto", list(data.SOURCES[source].keys()),
+    combined_label = st.selectbox(
+        "Prodotto", list(PRODUCT_CATALOG.keys()),
         index=None, placeholder="Cerca un prodotto...", key=f"product_{label}",
     )
+    source, product = PRODUCT_CATALOG[combined_label] if combined_label else (None, None)
     mode = st.selectbox("Tipo di valore", data.MODES, key=f"mode_{label}")
     return {
         "label": label, "axis": axis, "is_pad": False,
@@ -131,7 +147,37 @@ def render_sidebar():
         st.divider()
         refresh_bottom = st.button("Aggiorna grafico", type="primary", key="refresh_bottom")
 
+        compiled = [s for s in series_list if not s["is_pad"] and s["product"]]
+        if compiled:
+            st.markdown('<div class="legend-gap"></div>', unsafe_allow_html=True)
+            for s in compiled:
+                abbrev = _SOURCE_ABBREV[s["source"]]
+                unit, date_range, description = data.PRODUCT_INFO[s["product"]]
+                st.markdown(
+                    f'<div class="series-info"><b>{s["label"]}</b> — {s["product"]} ({abbrev}), '
+                    f'{unit}, {date_range}<br>{description}</div>',
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown('<div class="legend-gap"></div>', unsafe_allow_html=True)
+        st.caption("WBPS = World Bank Pink Sheet")
+        st.caption("FRED = FRED (Federal Reserve Economic Data)")
+        st.caption('Le voci con "PPI" sono indici di prezzo (base 100), non prezzi di mercato in $.')
+        st.caption("\\* = serie storica non recente")
+
+        st.markdown('<div class="legend-gap"></div>', unsafe_allow_html=True)
+        st.caption("Categorie: " + ", ".join(_all_categories()))
+
     return years_text, granularity, series_list, refresh_top or refresh_bottom
+
+
+def _all_categories():
+    """Nomi di categoria (prefisso prima di ' - ' in ogni etichetta prodotto), uniti dalle
+    due fonti e ordinati alfabeticamente. Derivato dai dizionari invece che scritto a mano
+    cosi' resta corretto se in futuro si aggiungono o rimuovono prodotti/categorie."""
+    labels = list(data.PINK_SHEET_PRODUCTS) + list(data.FRED_PRODUCTS)
+    categories = {label.split(" - ", 1)[0] for label in labels}
+    return sorted(categories)
 
 
 def _validate_series(source, product):

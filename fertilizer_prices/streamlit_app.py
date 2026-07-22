@@ -29,6 +29,9 @@ st.markdown(
     .pad-formula-gap {
         margin-top: 1rem;
     }
+    .legend-gap {
+        margin-top: 1.8rem;
+    }
     div.block-container {
         padding-top: 1.2rem;
     }
@@ -38,6 +41,10 @@ st.markdown(
     }
     .st-key-pink_sheet_refresh_container {
         margin-bottom: 0.8rem;
+    }
+    .series-info {
+        font-size: 0.8rem;
+        margin-bottom: 0.6rem;
     }
     .st-key-pink_sheet_refresh_container button {
         background-color: #ffb3b3;

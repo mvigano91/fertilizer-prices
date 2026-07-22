@@ -14,6 +14,14 @@ prima che il series ID esista e sia mensile, es.:
 python -c "import os, requests; r = requests.get('https://api.stlouisfed.org/fred/series', params={'series_id': 'XXXX', 'api_key': os.environ['FRED_API_KEY'], 'file_type': 'json'}); print(r.json())"
 ```
 
+Ogni voce aggiunta a `PINK_SHEET_PRODUCTS`/`FRED_PRODUCTS` deve avere anche una riga corrispondente
+in `PRODUCT_INFO` (stesso `data.py`): `"Etichetta": (unita', range date, descrizione breve)`,
+mostrata nella sidebar dell'app sotto "Aggiorna grafico" per le serie compilate. Se una serie ha
+smesso di aggiornarsi molto prima delle altre (piu' di ~1 anno di scarto), l'etichetta va marcata
+con un `*` finale (es. `"Cereali - Orzo*"`) — stesso suffisso in entrambi i dizionari — cosi'
+compare anche nel dropdown "Prodotto" e nella legenda in fondo alla sidebar ne spiega il significato.
+Le 5 voci gia' marcate cosi' sono elencate nella sezione "discontinuate" di ciascuna tabella sotto.
+
 ## World Bank Pink Sheet — tutte le 71 colonne (aggiornato luglio 2026)
 
 Tutte esposte in `PINK_SHEET_PRODUCTS`, raggruppate per categoria come nel file originale.
@@ -73,9 +81,9 @@ con lo storico fino alla data di interruzione.
 ### Cereali (9/9 esposte)
 | Colonna | Unita' | Range |
 |---|---|---|
-| Barley | $/mt | 1960-01 – 2020-08 (discontinuata) |
+| Barley (app: "Cereali - Orzo\*") | $/mt | 1960-01 – 2020-08 (discontinuata) |
 | Maize | $/mt | 1960-01 – 2026-06 |
-| Sorghum | $/mt | 1960-01 – 2020-08 (discontinuata) |
+| Sorghum (app: "Cereali - Sorgo\*") | $/mt | 1960-01 – 2020-08 (discontinuata) |
 | Rice, Thai 5% | $/mt | 1960-01 – 2026-06 |
 | Rice, Thai 25% | $/mt | 1986-01 – 2026-06 |
 | Rice, Thai A.1 | $/mt | 1986-01 – 2026-06 |
@@ -92,7 +100,7 @@ con lo storico fino alla data di interruzione.
 | Beef | $/kg | 1960-01 – 2026-06 |
 | Chicken | $/kg | 1960-01 – 2026-06 |
 | Lamb | $/kg | 1971-01 – 2026-06 |
-| Shrimps, Mexican | $/kg | 1960-01 – 2023-10 (discontinuata) |
+| Shrimps, Mexican (app: "Alimentari - Gamberetti messicani\*") | $/kg | 1960-01 – 2023-10 (discontinuata) |
 | Sugar, EU | $/kg | 1960-01 – 2026-06 |
 | Sugar, US | $/kg | 1960-01 – 2026-06 |
 | Sugar, world | $/kg | 1960-01 – 2026-06 |
@@ -138,10 +146,10 @@ con lo storico fino alla data di interruzione.
 
 | Series ID | Titolo | Range | Categoria app |
 |---|---|---|---|
-| PCU325311325311 | Nitrogenous Fertilizer Manufacturing PPI | – 2026-06 | Azoto (gia' presente) |
-| PCU325311325311A4 | Urea Manufacturing PPI | – 2026-06 | Azoto (gia' presente) |
-| PCU325312325312 | Phosphatic Fertilizer Manufacturing PPI | – 2026-06 | Fosforo (gia' presente) |
-| PCU212391212391 | Potash, Soda, and Borate Mineral Mining PPI | – 2026-06 | Potassio (gia' presente) |
+| PCU325311325311 | Nitrogenous Fertilizer Manufacturing PPI | 1975-12 – 2026-06 | Azoto (gia' presente) |
+| PCU325311325311A4 | Urea Manufacturing PPI | 1959-01 – **2014-12 (discontinuata)** | Azoto\* (gia' presente) |
+| PCU325312325312 | Phosphatic Fertilizer Manufacturing PPI | 1967-01 – 2026-06 | Fosforo (gia' presente) |
+| PCU212391212391 | Potash, Soda, and Borate Mineral Mining PPI | 1984-12 – **2022-12 (discontinuata)** | Potassio\* (gia' presente) |
 | WPU0531 | PPI Commodity: Natural Gas | 1967 – 2026-06 | Gas naturale |
 | WPU05532101 | PPI Commodity: Industrial Natural Gas | 1991 – 2026-06 | Gas naturale |
 | MHHNGSP | Henry Hub Natural Gas Spot Price | 1997 – 2026-06 | Gas naturale |
