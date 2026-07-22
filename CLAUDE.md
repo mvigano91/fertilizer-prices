@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This repo contains two independent, unrelated deliverables:
 
 - `tictactoe.html` — a self-contained, static two-player tic-tac-toe game. No build system, package manager, linter, or test suite — the file is meant to be opened directly in a browser.
-- `fertilizer_prices/` — a Python app that charts historical fertilizer prices (Azoto/Fosforo/Potassio), available both as a Tkinter desktop GUI and as a Streamlit web app.
+- `fertilizer_prices/` — a Python app that charts historical commodity prices, centered on fertilizers (Azoto/Fosforo/Potassio) but expanded to related/comparison series (energy incl. natural gas, agriculture, metals, ...), available both as a Tkinter desktop GUI and as a Streamlit web app.
 
 ## tictactoe.html
 
@@ -27,7 +27,7 @@ When editing this file, keep it a single self-contained HTML document (no extern
 
 ## fertilizer_prices/
 
-A GUI to chart the historical price of nitrogen/phosphorus/potassium fertilizers (Urea, DAP, TSP, Phosphate rock, Potassium chloride), from two selectable data sources: World Bank "Pink Sheet" (real market prices, $/mt) and FRED (US PPI indices). Both sources are monthly only, so the GUI's granularity options are Mensile/Trimestrale/Annuale (never daily/weekly — there is no free daily source for these products).
+A GUI to chart historical commodity prices from two selectable data sources: World Bank "Pink Sheet" (real market prices, all 71 commodities in the file — not just fertilizers, see `DATA_SOURCES_CATALOG.md`) and FRED (a curated set of ~20 PPI/price series: the original fertilizer indices plus natural gas, sector detail, and demand-side agricultural series, also cataloged in `DATA_SOURCES_CATALOG.md`). Both sources are monthly only, so the GUI's granularity options are Mensile/Trimestrale/Annuale (never daily/weekly — there is no free daily source for these products).
 
 ### Running / viewing
 
@@ -48,7 +48,7 @@ The FRED data source requires a free `FRED_API_KEY` (https://fred.stlouisfed.org
   - `load_pink_sheet_prices()` parses the local `data/CMO-Historical-Data-Monthly.xlsx` (World Bank "Monthly Prices" sheet).
   - `load_fred_series()` calls the FRED REST API.
   - `get_series(source, product_label, years_back, granularity, mode)` is the single entry point the GUIs call — it resolves the source, clips to the requested years, resamples, and computes period-over-period % change when requested.
-  - `PINK_SHEET_PRODUCTS` / `FRED_PRODUCTS` / `SOURCES` define the product catalog per source, used to populate the product dropdown dynamically based on the chosen source.
+  - `PINK_SHEET_PRODUCTS` / `FRED_PRODUCTS` / `SOURCES` define the product catalog per source, used to populate the product dropdown dynamically based on the chosen source. Labels are prefixed by category (e.g. `"Energia - Gas naturale USA (Henry Hub)"`, `"Domanda - PPI Mais (USA)"`) so the flat dropdown still reads as grouped. See `DATA_SOURCES_CATALOG.md` for the full inventory of what each source offers, what's exposed vs. deliberately left out (duplicates, discontinued series), and how to verify/add a new entry.
 - `app.py` — Tkinter desktop GUI. **Currently paused**: per explicit user direction, active development happens only on the Streamlit app until the project is further along; `app.py` will be brought back in sync with the Streamlit feature set (multi-series, Pad formulas, regression tab) in one pass later rather than incrementally. It still supports an optional second overlaid time series (added before the pause) and depends on `matplotlib` directly (`FigureCanvasTkAgg`/`Figure`) — keep `matplotlib` in `requirements.txt` for this reason even though the Streamlit app no longer uses it.
 - `streamlit_app.py` — thin orchestrator for the web app: page config, sidebar CSS, wires together the modules below into two tabs, "Serie storiche" and "Regressione". Session state (`chart_error` / `series_result`) is what keeps the last computed result visible across sidebar interactions that aren't "Aggiorna grafico".
 - `series_config.py` — sidebar UI and series resolution, shared by both tabs so the regression tab never re-fetches data:

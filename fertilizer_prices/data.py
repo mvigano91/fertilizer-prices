@@ -1,8 +1,13 @@
-"""Caricamento e normalizzazione delle serie storiche di prezzo dei fertilizzanti.
+"""Caricamento e normalizzazione delle serie storiche di prezzo.
 
 Due fonti disponibili:
-- World Bank "Pink Sheet" (file Excel locale, prezzi mensili in $/mt)
-- FRED (indici PPI mensili, via API REST, richiede FRED_API_KEY)
+- World Bank "Pink Sheet" (file Excel locale, prezzi mensili in $/mt): tutte le 71
+  commodity del file sono esposte (non solo fertilizzanti), per poter correlare i
+  fertilizzanti con materie prime collegate (es. gas naturale) o generiche.
+- FRED (indici PPI mensili e alcune serie di prezzo, via API REST, richiede
+  FRED_API_KEY): selezione curata di serie fertilizzanti + gas naturale + settore +
+  lato domanda, vedi DATA_SOURCES_CATALOG.md per l'elenco completo di cosa e'
+  disponibile e cosa e' stato scartato.
 """
 
 import os
@@ -27,21 +32,108 @@ _XLSX_LINK_RE = re.compile(
 )
 _HTTP_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-# Etichetta prodotto (mostrata in GUI) -> colonna nel file Pink Sheet
+# Etichetta prodotto (mostrata in GUI) -> colonna nel file Pink Sheet.
+# Elenco completo delle 71 colonne del file, non solo fertilizzanti: vedi
+# DATA_SOURCES_CATALOG.md per unita' di misura e range di date di ognuna.
 PINK_SHEET_PRODUCTS = {
     "Azoto - Urea": "Urea",
     "Fosforo - DAP": "DAP",
     "Fosforo - TSP": "TSP",
     "Fosforo - Phosphate rock": "Phosphate rock",
     "Potassio - Cloruro di potassio (MOP)": "Potassium chloride",
+    "Energia - Petrolio greggio (media)": "Crude oil, average",
+    "Energia - Petrolio greggio Brent": "Crude oil, Brent",
+    "Energia - Petrolio greggio Dubai": "Crude oil, Dubai",
+    "Energia - Petrolio greggio WTI": "Crude oil, WTI",
+    "Energia - Carbone australiano": "Coal, Australian",
+    "Energia - Carbone sudafricano": "Coal, South African",
+    "Energia - Gas naturale USA (Henry Hub)": "Natural gas, US",
+    "Energia - Gas naturale Europa (TTF)": "Natural gas, Europe",
+    "Energia - GNL Giappone": "Liquefied natural gas, Japan",
+    "Energia - Indice gas naturale": "Natural gas index",
+    "Bevande - Cacao": "Cocoa",
+    "Bevande - Caffe' Arabica": "Coffee, Arabica",
+    "Bevande - Caffe' Robusta": "Coffee, Robusta",
+    "Bevande - Te' (media 3 aste)": "Tea, avg 3 auctions",
+    "Bevande - Te' Colombo": "Tea, Colombo",
+    "Bevande - Te' Kolkata": "Tea, Kolkata",
+    "Bevande - Te' Mombasa": "Tea, Mombasa",
+    "Oli e semi - Olio di cocco": "Coconut oil",
+    "Oli e semi - Arachidi": "Groundnuts",
+    "Oli e semi - Farina di pesce": "Fish meal",
+    "Oli e semi - Olio di arachidi": "Groundnut oil",
+    "Oli e semi - Olio di palma": "Palm oil",
+    "Oli e semi - Olio di palmisto": "Palm kernel oil",
+    "Oli e semi - Soia": "Soybeans",
+    "Oli e semi - Olio di soia": "Soybean oil",
+    "Oli e semi - Farina di soia": "Soybean meal",
+    "Oli e semi - Olio di colza": "Rapeseed oil",
+    "Oli e semi - Olio di girasole": "Sunflower oil",
+    "Cereali - Orzo": "Barley",
+    "Cereali - Mais": "Maize",
+    "Cereali - Sorgo": "Sorghum",
+    "Cereali - Riso Thai 5%": "Rice, Thai 5%",
+    "Cereali - Riso Thai 25%": "Rice, Thai 25%",
+    "Cereali - Riso Thai A.1": "Rice, Thai A.1",
+    "Cereali - Riso Vietnamita 5%": "Rice, Viet Namese 5%",
+    "Cereali - Grano USA SRW": "Wheat, US SRW",
+    "Cereali - Grano USA HRW": "Wheat, US HRW",
+    "Alimentari - Banana Europa": "Banana, Europe",
+    "Alimentari - Banana USA": "Banana, US",
+    "Alimentari - Arancia": "Orange",
+    "Alimentari - Manzo": "Beef",
+    "Alimentari - Pollo": "Chicken",
+    "Alimentari - Agnello": "Lamb",
+    "Alimentari - Gamberetti messicani": "Shrimps, Mexican",
+    "Alimentari - Zucchero UE": "Sugar, EU",
+    "Alimentari - Zucchero USA": "Sugar, US",
+    "Alimentari - Zucchero mondo": "Sugar, world",
+    "Alimentari - Tabacco USA": "Tobacco, US import u.v.",
+    "Legname - Tronchi Camerun": "Logs, Cameroon",
+    "Legname - Tronchi Malesia": "Logs, Malaysian",
+    "Legname - Legname segato Camerun": "Sawnwood, Cameroon",
+    "Legname - Legname segato Malesia": "Sawnwood, Malaysian",
+    "Legname - Compensato": "Plywood",
+    "Materie prime - Cotone": "Cotton, A Index",
+    "Materie prime - Gomma TSR20": "Rubber, TSR20",
+    "Materie prime - Gomma RSS3": "Rubber, RSS3",
+    "Metalli - Alluminio": "Aluminum",
+    "Metalli - Minerale di ferro": "Iron ore, cfr spot",
+    "Metalli - Rame": "Copper",
+    "Metalli - Piombo": "Lead",
+    "Metalli - Stagno": "Tin",
+    "Metalli - Nickel": "Nickel",
+    "Metalli - Zinco": "Zinc",
+    "Metalli preziosi - Oro": "Gold",
+    "Metalli preziosi - Platino": "Platinum",
+    "Metalli preziosi - Argento": "Silver",
 }
 
-# Etichetta prodotto (mostrata in GUI) -> series id FRED
+# Etichetta prodotto (mostrata in GUI) -> series id FRED.
+# Selezione curata (non tutte le serie FRED esistenti): gas naturale, dettagli di
+# settore e indicatori lato domanda. Vedi DATA_SOURCES_CATALOG.md per le serie scartate
+# (duplicate o discontinuate) e per come aggiungerne altre in futuro.
 FRED_PRODUCTS = {
     "Azoto - PPI Fertilizzanti Azotati": "PCU325311325311",
     "Azoto - PPI Urea": "PCU325311325311A4",
     "Fosforo - PPI Fertilizzanti Fosfatici": "PCU325312325312",
     "Potassio - PPI Potassa (mining)": "PCU212391212391",
+    "Gas naturale - PPI Gas naturale": "WPU0531",
+    "Gas naturale - PPI Gas naturale industriale": "WPU05532101",
+    "Gas naturale - Prezzo spot Henry Hub": "MHHNGSP",
+    "Settore - PPI Agrochimici (totale settore)": "PCU32533253",
+    "Settore - PPI Ammoniaca e Urea (a monte)": "PCU325311325311A",
+    "Settore - PPI Fertilizzanti organici": "PCU3253113253117",
+    "Settore - PPI Acido fosforico e superfosfati": "PCU325312325312A",
+    "Settore - PPI Fosfati (storico dal 1947)": "WPU065202",
+    "Domanda - PPI Prodotti agricoli (generale)": "WPU01",
+    "Domanda - PPI Mais (USA)": "WPU012202",
+    "Domanda - PPI Soia (USA)": "WPU01830131",
+    "Domanda - PPI Grano Hard Red Spring (USA)": "WPU01210102",
+    "Domanda - PPI Grano Soft White (USA)": "WPU01210103",
+    "Domanda - Prezzo mondiale Mais (IMF)": "PMAIZMTUSDM",
+    "Domanda - Prezzo mondiale Soia (IMF)": "PSOYBUSDM",
+    "Domanda - Prezzo mondiale Grano (IMF)": "PWHEAMTUSDM",
 }
 
 SOURCES = {

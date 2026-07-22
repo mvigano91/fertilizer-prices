@@ -65,7 +65,10 @@ def render_series_controls(label, first=False):
         }
 
     source = st.selectbox("Fonte dati", list(data.SOURCES.keys()), key=f"source_{label}")
-    product = st.selectbox("Prodotto", list(data.SOURCES[source].keys()), key=f"product_{label}")
+    product = st.selectbox(
+        "Prodotto", list(data.SOURCES[source].keys()),
+        index=None, placeholder="Cerca un prodotto...", key=f"product_{label}",
+    )
     mode = st.selectbox("Tipo di valore", data.MODES, key=f"mode_{label}")
     return {
         "label": label, "axis": axis, "is_pad": False,
@@ -156,6 +159,8 @@ def validate_years(years_text, series_list):
             if not s["formula"].strip():
                 return None, f"Inserisci una formula per {s['label']} (es. S1 - S2)."
             continue
+        if not s["product"]:
+            return None, f"Seleziona un prodotto per {s['label']}."
         max_years, error = _validate_series(s["source"], s["product"])
         if error:
             return None, error
