@@ -160,6 +160,7 @@ def render_sidebar():
                 )
 
         st.markdown('<div class="legend-gap"></div>', unsafe_allow_html=True)
+        st.caption("Pad = operazione tra le serie. Es: S1-S2")
         st.caption("WBPS = World Bank Pink Sheet")
         st.caption("FRED = FRED (Federal Reserve Economic Data)")
         st.caption('Le voci con "PPI" sono indici di prezzo (base 100), non prezzi di mercato in $.')
