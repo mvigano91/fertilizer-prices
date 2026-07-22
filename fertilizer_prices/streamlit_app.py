@@ -42,6 +42,9 @@ st.markdown(
     .st-key-pink_sheet_refresh_container {
         margin-bottom: 0.8rem;
     }
+    .st-key-pink_sheet_date_container {
+        margin-top: 0.4rem;
+    }
     .series-info {
         font-size: 0.8rem;
         margin-bottom: 0.6rem;

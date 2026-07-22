@@ -102,18 +102,25 @@ def render_sidebar():
         st.session_state["num_series"] = 1
 
     with st.sidebar:
-        with st.container(key="pink_sheet_refresh_container"):
-            if st.button(
-                "Aggiorna dati World Bank", key="refresh_pink_sheet", use_container_width=True,
-            ):
-                with st.spinner("Scarico l'ultimo file Pink Sheet dal sito World Bank..."):
-                    try:
-                        data.refresh_pink_sheet_file()
-                    except data.PinkSheetRefreshError as exc:
-                        st.session_state["pink_sheet_refresh_error"] = str(exc)
-                    else:
-                        st.session_state["pink_sheet_refresh_error"] = None
-                        st.session_state["pink_sheet_refresh_done"] = True
+        col_refresh_wb, col_last_updated = st.columns([1, 1])
+        with col_refresh_wb:
+            with st.container(key="pink_sheet_refresh_container"):
+                if st.button(
+                    "Aggiorna dati WBPS", key="refresh_pink_sheet", use_container_width=True,
+                ):
+                    with st.spinner("Scarico l'ultimo file Pink Sheet dal sito World Bank..."):
+                        try:
+                            data.refresh_pink_sheet_file()
+                        except data.PinkSheetRefreshError as exc:
+                            st.session_state["pink_sheet_refresh_error"] = str(exc)
+                        else:
+                            st.session_state["pink_sheet_refresh_error"] = None
+                            st.session_state["pink_sheet_refresh_done"] = True
+        with col_last_updated:
+            with st.container(key="pink_sheet_date_container"):
+                last_updated = data.pink_sheet_last_updated()
+                if last_updated:
+                    st.caption(f"Ultimo agg.: {last_updated:%d/%m/%Y}")
 
         if st.session_state.get("pink_sheet_refresh_error"):
             st.error(st.session_state["pink_sheet_refresh_error"])

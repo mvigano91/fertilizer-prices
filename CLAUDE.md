@@ -27,7 +27,7 @@ When editing this file, keep it a single self-contained HTML document (no extern
 
 ## fertilizer_prices/
 
-A GUI to chart historical commodity prices from two selectable data sources: World Bank "Pink Sheet" (real market prices, all 71 commodities in the file — not just fertilizers, see `DATA_SOURCES_CATALOG.md`) and FRED (a curated set of ~20 PPI/price series: the original fertilizer indices plus natural gas, sector detail, and demand-side agricultural series, also cataloged in `DATA_SOURCES_CATALOG.md`). Both sources are monthly only, so the GUI's granularity options are Mensile/Trimestrale/Annuale (never daily/weekly — there is no free daily source for these products).
+A GUI to chart historical commodity prices from two selectable data sources: World Bank "Pink Sheet" (real market prices, all 71 commodities in the file — not just fertilizers, see `DATA_SOURCES_CATALOG.md`) and FRED (a curated set of ~21 PPI/price series: the original fertilizer indices plus natural gas, sulfur, upstream/sector detail, and demand-side agricultural series, also cataloged in `DATA_SOURCES_CATALOG.md`). Both sources are monthly only, so the GUI's granularity options are Mensile/Trimestrale/Annuale (never daily/weekly — there is no free daily source for these products).
 
 ### Running / viewing
 

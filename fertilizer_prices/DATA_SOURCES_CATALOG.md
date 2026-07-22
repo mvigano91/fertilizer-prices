@@ -153,19 +153,20 @@ con lo storico fino alla data di interruzione.
 | WPU0531 | PPI Commodity: Natural Gas | 1967 – 2026-06 | Gas naturale |
 | WPU05532101 | PPI Commodity: Industrial Natural Gas | 1991 – 2026-06 | Gas naturale |
 | MHHNGSP | Henry Hub Natural Gas Spot Price | 1997 – 2026-06 | Gas naturale |
-| PCU32533253 | Pesticide, Fertilizer, and Other Agricultural Chemical Mfg PPI | 1984 – 2026-06 | Settore |
-| PCU325311325311A | Nitrogenous Fert. Mfg: Ammonia, Nitric Acid, Ammonium Compounds, Urea | 2014 – 2026-06 | Settore |
-| PCU3253113253117 | Nitrogenous Fert. Mfg: Fertilizer Materials of Organic Origin | 2003 – 2026-06 | Settore |
-| PCU325312325312A | Phosphatic Fert. Mfg: Phosphoric Acid, Superphosphates | 2009 – 2026-06 | Settore |
-| WPU065202 | PPI Commodity: Chemicals: Phosphates | 1947 – 2026-06 | Settore |
-| WPU01 | PPI Commodity: Farm Products | 1913 – 2026-06 | Domanda |
-| WPU012202 | PPI Commodity: Farm Products: Corn | 1971 – 2026-06 | Domanda |
-| WPU01830131 | PPI Commodity: Farm Products: Soybeans | 1947 – 2026-06 | Domanda |
-| WPU01210102 | PPI Commodity: Farm Products: Hard Red Spring Wheat | 1947 – 2026-06 | Domanda |
-| WPU01210103 | PPI Commodity: Farm Products: Soft White Wheat | 1947 – 2026-06 | Domanda |
-| PMAIZMTUSDM | Global price of Corn (IMF, $/mt) | 1992 – 2026-06 | Domanda |
-| PSOYBUSDM | Global price of Soybeans (IMF, $/mt) | 1992 – 2026-06 | Domanda |
-| PWHEAMTUSDM | Global price of Wheat (IMF, $/mt) | 1992 – 2026-06 | Domanda |
+| PCU32533253 | Pesticide, Fertilizer, and Other Agricultural Chemical Mfg PPI | 1984 – 2026-06 | Agrochimici (unico aggregato non riconducibile a un solo nutriente) |
+| PCU325311325311A | Nitrogenous Fert. Mfg: Ammonia, Nitric Acid, Ammonium Compounds, Urea | 2014 – 2026-06 | Azoto (a monte) |
+| PCU3253113253117 | Nitrogenous Fert. Mfg: Fertilizer Materials of Organic Origin | 2003 – 2026-06 | Azoto (a monte) |
+| PCU325312325312A | Phosphatic Fert. Mfg: Phosphoric Acid, Superphosphates | 2009 – 2026-06 | Fosforo (a monte) |
+| WPU065202 | PPI Commodity: Chemicals: Phosphates | 1947 – 2026-06 | Fosforo (a monte) |
+| PCU3251803251809 | Other Basic Inorganic Chemical Mfg: Sulfuric Acid | 1973-12 – 2026-06 | Zolfo (a monte fosfati, via acido fosforico) |
+| WPU01 | PPI Commodity: Farm Products | 1913 – 2026-06 | Agricoltura (unico aggregato non specifico di un solo cereale/oleoso) |
+| WPU012202 | PPI Commodity: Farm Products: Corn | 1971 – 2026-06 | Cereali |
+| WPU01830131 | PPI Commodity: Farm Products: Soybeans | 1947 – 2026-06 | Oli e semi |
+| WPU01210102 | PPI Commodity: Farm Products: Hard Red Spring Wheat | 1947 – 2026-06 | Cereali |
+| WPU01210103 | PPI Commodity: Farm Products: Soft White Wheat | 1947 – 2026-06 | Cereali |
+| PMAIZMTUSDM | Global price of Corn (IMF, $/mt) | 1992 – 2026-06 | Cereali |
+| PSOYBUSDM | Global price of Soybeans (IMF, $/mt) | 1992 – 2026-06 | Oli e semi |
+| PWHEAMTUSDM | Global price of Wheat (IMF, $/mt) | 1992 – 2026-06 | Cereali |
 
 ### Trovate ma NON aggiunte (disponibili in futuro se servono)
 
@@ -183,10 +184,11 @@ con lo storico fino alla data di interruzione.
 | PCU2123912123913 | Other Nonmetallic Mineral Mining: Sodium Carbonates/Sulfates | **Discontinuata** (fino a 2022-03), fuori tema |
 | PCU325311325311A1 | Ammonia/Nitric Acid/Ammonium Compounds (senza urea) | **Discontinuata** 2014-12, sostituita da PCU325311325311A |
 | PCU3253113253111 | stessa serie, nome alternativo | **Discontinuata** 2014-12 |
-| PCU3251803251803 | Other Basic Inorganic Chemical Mfg: Inorganic Acids | Fuori tema (chimica generica, non fertilizzanti) |
+| PCU3251803251803 | Other Basic Inorganic Chemical Mfg: Inorganic Acids (esclude nitrico/solforico/fosforico) | Fuori tema (chimica generica, non fertilizzanti) |
 | PCU3251803251804 | Other Basic Inorganic Chemical Mfg: Sodium Hydroxide | Fuori tema |
-| PCU325180325180811 | Sulfuric Acid | **Discontinuata** (fino a 2017-12) |
-| PCU32518032518081 | Sulfuric and Other Inorganic Acids | **Discontinuata** (fino a 2017-12) |
+| PCU325180325180811 | Sulfuric Acid (nome legacy) | **Discontinuata** (fino a 2017-12) — sostituita da `PCU3251803251809` (stesso titolo, senza "DISCONTINUED", attiva fino a 2026-06), che infatti e' quella aggiunta come "Zolfo - PPI Acido solforico" |
+| PCU32518032518081 | Sulfuric and Other Inorganic Acids | **Discontinuata** (fino a 2017-12), nessun successore trovato per questa combinazione specifica |
+| WPU0613020T1 | PPI Commodity: Chemicals: Sulfuric Acid | Attiva, 1987 – 2026-06 — alternativa "by Commodity" a `PCU3251803251809`, non aggiunta per evitare doppioni (stesso pattern delle altre coppie Industry/Commodity sopra) |
 | WPU0551 / WPU05512101 | Residential Natural Gas | Prezzo al consumatore residenziale, non industriale — meno rilevante come costo materia prima |
 
 Nota granularita': ogni serie qui sopra e' stata verificata come mensile (`frequency_short: "M"`)
@@ -194,3 +196,77 @@ via `GET /fred/series`. FRED ospita anche serie giornaliere/settimanali/trimestr
 di interesse, indici di borsa), ma nessuna di quelle rilevanti per fertilizzanti/materie prime
 agricole lo e' — la granularita' Mensile/Trimestrale/Annuale dell'app resta quindi valida anche
 dopo questa espansione.
+
+## FRED — altre categorie (macro/investimenti, non ancora usate nell'app)
+
+Ricerca fatta su richiesta esplicita per ampliare lo scope oltre fertilizzanti/commodity, in
+vista di un uso piu' da "osservatorio macro/investimenti". Ogni ID verificato contro l'API reale
+(un solo ID cercato, `GOLDAMGBD228NLBM`, non esiste piu' — scartato). **Attenzione**: a differenza
+di tutto il resto del catalogo sopra, qui la maggior parte delle serie NON e' mensile — vedi
+colonna Frequenza. L'app oggi assume sorgenti mensili (`_RESAMPLE_RULE` in `data.py` non
+ricampiona quando la granularita' e' "Mensile", assumendo che i dati lo siano gia'); per usare
+le serie giornaliere/settimanali sotto andrebbe prima adattata quella logica di resampling.
+
+### Tassi e politica monetaria
+| Series ID | Titolo | Frequenza | Range |
+|---|---|---|---|
+| FEDFUNDS | Federal Funds Effective Rate | Mensile | 1954 – 2026-06 |
+| DGS10 / DGS2 / DGS3MO | Treasury USA 10 anni / 2 anni / 3 mesi | Giornaliera | 1962/1976/1981 – 2026-07 |
+| T10Y2Y | Spread Treasury 10y − 2y (indicatore recessione) | Giornaliera | 1976 – 2026-07 |
+| MORTGAGE30US | Tasso mutuo fisso 30 anni USA | Settimanale | 1971 – 2026-07 |
+| M2SL | Massa monetaria M2 | Mensile | 1959 – 2026-05 |
+
+### Inflazione
+| Series ID | Titolo | Frequenza | Range |
+|---|---|---|---|
+| CPIAUCSL | CPI generale USA | Mensile | 1947 – 2026-06 |
+| CPILFESL | Core CPI (esclude cibo/energia) | Mensile | 1957 – 2026-06 |
+| PCEPI / PCEPILFE | Indice prezzi PCE / Core PCE (misura preferita dalla Fed) | Mensile | 1959 – 2026-05 |
+| T10YIE | Inflazione attesa 10 anni (breakeven) | Giornaliera | 2003 – 2026-07 |
+
+### Lavoro
+| Series ID | Titolo | Frequenza | Range |
+|---|---|---|---|
+| UNRATE | Tasso di disoccupazione USA | Mensile | 1948 – 2026-06 |
+| PAYEMS | Occupati non agricoli | Mensile | 1939 – 2026-06 |
+| ICSA | Richieste di disoccupazione | Settimanale | 1967 – 2026-07 |
+| CIVPART | Tasso di partecipazione forza lavoro | Mensile | 1948 – 2026-06 |
+
+### Crescita economica
+| Series ID | Titolo | Frequenza | Range |
+|---|---|---|---|
+| GDP / GDPC1 | PIL nominale / reale USA | Trimestrale | 1947 – 2026-01 |
+| A191RL1Q225SBEA | Crescita PIL reale % annualizzata | Trimestrale | 1947 – 2026-01 |
+
+### Mercati finanziari
+| Series ID | Titolo | Frequenza | Range |
+|---|---|---|---|
+| SP500 | Indice S&P 500 | Giornaliera | 2016 – 2026-07 (storico corto su FRED) |
+| VIXCLS | Indice di volatilita' VIX | Giornaliera | 1990 – 2026-07 |
+| BAA10Y | Spread bond corporate Baa vs Treasury 10y (rischio credito) | Giornaliera | 1986 – 2026-07 |
+
+### Cambi
+| Series ID | Titolo | Frequenza | Range |
+|---|---|---|---|
+| DTWEXBGS | Indice dollaro USA ponderato | Giornaliera | 2006 – 2026-07 |
+| DEXUSEU | Cambio USD/EUR | Giornaliera | 1999 – 2026-07 |
+| DEXJPUS | Cambio JPY/USD | Giornaliera | 1971 – 2026-07 |
+| DEXCHUS | Cambio CNY/USD | Giornaliera | 1981 – 2026-07 |
+
+### Immobiliare
+| Series ID | Titolo | Frequenza | Range |
+|---|---|---|---|
+| CSUSHPISA | Indice prezzi case Case-Shiller USA | Mensile | 1987 – 2026-04 |
+| HOUST | Nuove costruzioni residenziali avviate | Mensile | 1959 – 2026-06 |
+
+### Altro
+| Series ID | Titolo | Frequenza | Range |
+|---|---|---|---|
+| TOTALSL | Credito al consumo USA | Mensile | 1943 – 2026-05 |
+| USREC | Indicatore recessione NBER (0/1) | Mensile | 1854 – 2026-06 |
+| DCOILWTICO | Prezzo greggio WTI (alternativa giornaliera al dato World Bank mensile) | Giornaliera | 1986 – 2026-07 |
+
+Se in futuro si vuole procedere: le voci Mensili sopra si possono aggiungere subito con lo stesso
+meccanismo di `FRED_PRODUCTS`/`PRODUCT_INFO` gia' in uso. Per quelle giornaliere/settimanali va
+prima deciso (con l'utente) se ricampionarle a Mensile/Trimestrale/Annuale come le altre, o se
+dare loro una granularita' propria.

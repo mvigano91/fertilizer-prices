@@ -5,11 +5,12 @@ Due fonti disponibili:
   commodity del file sono esposte (non solo fertilizzanti), per poter correlare i
   fertilizzanti con materie prime collegate (es. gas naturale) o generiche.
 - FRED (indici PPI mensili e alcune serie di prezzo, via API REST, richiede
-  FRED_API_KEY): selezione curata di serie fertilizzanti + gas naturale + settore +
-  lato domanda, vedi DATA_SOURCES_CATALOG.md per l'elenco completo di cosa e'
-  disponibile e cosa e' stato scartato.
+  FRED_API_KEY): selezione curata di serie fertilizzanti, gas naturale, zolfo,
+  agrochimici e cereali/oli e semi, vedi DATA_SOURCES_CATALOG.md per l'elenco
+  completo di cosa e' disponibile e cosa e' stato scartato.
 """
 
+import datetime
 import os
 import re
 from pathlib import Path
@@ -110,30 +111,36 @@ PINK_SHEET_PRODUCTS = {
 }
 
 # Etichetta prodotto (mostrata in GUI) -> series id FRED.
-# Selezione curata (non tutte le serie FRED esistenti): gas naturale, dettagli di
-# settore e indicatori lato domanda. Vedi DATA_SOURCES_CATALOG.md per le serie scartate
+# Selezione curata (non tutte le serie FRED esistenti): gas naturale, zolfo, dettagli
+# a monte per nutriente e indicatori lato domanda. Le voci "a monte" (ammoniaca/urea,
+# acido fosforico, fosfati) sono categorizzate sotto il nutriente a cui appartengono
+# (Azoto/Fosforo) invece di un generico "Settore", che non comunicava nulla di concreto
+# — l'unica eccezione resta "Agrochimici", perche' quella singola voce e' davvero un
+# aggregato dell'intero settore (azoto+fosforo+potassio+pesticidi insieme), non
+# riconducibile a un solo nutriente. Vedi DATA_SOURCES_CATALOG.md per le serie scartate
 # (duplicate o discontinuate) e per come aggiungerne altre in futuro.
 FRED_PRODUCTS = {
     "Azoto - PPI Fertilizzanti Azotati": "PCU325311325311",
     "Azoto - PPI Urea*": "PCU325311325311A4",
+    "Azoto - PPI Ammoniaca e Urea (a monte)": "PCU325311325311A",
+    "Azoto - PPI Fertilizzanti organici": "PCU3253113253117",
     "Fosforo - PPI Fertilizzanti Fosfatici": "PCU325312325312",
+    "Fosforo - PPI Acido fosforico e superfosfati": "PCU325312325312A",
+    "Fosforo - PPI Fosfati (storico dal 1947)": "WPU065202",
     "Potassio - PPI Potassa (mining)*": "PCU212391212391",
     "Gas naturale - PPI Gas naturale": "WPU0531",
     "Gas naturale - PPI Gas naturale industriale": "WPU05532101",
     "Gas naturale - Prezzo spot Henry Hub": "MHHNGSP",
-    "Settore - PPI Agrochimici (totale settore)": "PCU32533253",
-    "Settore - PPI Ammoniaca e Urea (a monte)": "PCU325311325311A",
-    "Settore - PPI Fertilizzanti organici": "PCU3253113253117",
-    "Settore - PPI Acido fosforico e superfosfati": "PCU325312325312A",
-    "Settore - PPI Fosfati (storico dal 1947)": "WPU065202",
-    "Domanda - PPI Prodotti agricoli (generale)": "WPU01",
-    "Domanda - PPI Mais (USA)": "WPU012202",
-    "Domanda - PPI Soia (USA)": "WPU01830131",
-    "Domanda - PPI Grano Hard Red Spring (USA)": "WPU01210102",
-    "Domanda - PPI Grano Soft White (USA)": "WPU01210103",
-    "Domanda - Prezzo mondiale Mais (IMF)": "PMAIZMTUSDM",
-    "Domanda - Prezzo mondiale Soia (IMF)": "PSOYBUSDM",
-    "Domanda - Prezzo mondiale Grano (IMF)": "PWHEAMTUSDM",
+    "Zolfo - PPI Acido solforico": "PCU3251803251809",
+    "Agrochimici - PPI Settore agrochimico (totale)": "PCU32533253",
+    "Agricoltura - PPI Prodotti agricoli (generale)": "WPU01",
+    "Cereali - PPI Mais (USA)": "WPU012202",
+    "Oli e semi - PPI Soia (USA)": "WPU01830131",
+    "Cereali - PPI Grano Hard Red Spring (USA)": "WPU01210102",
+    "Cereali - PPI Grano Soft White (USA)": "WPU01210103",
+    "Cereali - Prezzo mondiale Mais (IMF)": "PMAIZMTUSDM",
+    "Oli e semi - Prezzo mondiale Soia (IMF)": "PSOYBUSDM",
+    "Cereali - Prezzo mondiale Grano (IMF)": "PWHEAMTUSDM",
 }
 
 # Etichetta prodotto (stessa chiave di PINK_SHEET_PRODUCTS/FRED_PRODUCTS) -> (unita' di
@@ -221,19 +228,20 @@ PRODUCT_INFO = {
     "Gas naturale - PPI Gas naturale": ("indice 1982=100", "1967-2026", "Indice PPI gas naturale (tutti gli usi), proxy del costo materia prima per urea/ammoniaca."),
     "Gas naturale - PPI Gas naturale industriale": ("indice", "1991-2026", "Indice PPI gas naturale per uso industriale, piu' vicino al costo reale per un impianto fertilizzanti."),
     "Gas naturale - Prezzo spot Henry Hub": ("$/mmbtu", "1997-2026", "Prezzo spot gas naturale USA, benchmark Henry Hub (fonte EIA, non un indice)."),
-    "Settore - PPI Agrochimici (totale settore)": ("indice", "1984-2026", "Indice PPI dell'intero settore pesticidi+fertilizzanti+agrochimici (NAICS 3253), aggregato."),
-    "Settore - PPI Ammoniaca e Urea (a monte)": ("indice", "2014-2026", "Indice PPI ammoniaca sintetica, acido nitrico, composti d'ammonio e urea — prodotti intermedi a monte del fertilizzante finito."),
-    "Settore - PPI Fertilizzanti organici": ("indice", "2003-2026", "Indice PPI fertilizzanti di origine organica (settore azotati)."),
-    "Settore - PPI Acido fosforico e superfosfati": ("indice", "2009-2026", "Indice PPI acido fosforico, superfosfati e altri materiali fosfatici — prodotti intermedi a monte del fertilizzante fosfatico finito."),
-    "Settore - PPI Fosfati (storico dal 1947)": ("indice 1982=100", "1947-2026", "Indice PPI commodity per i fosfati, classificazione alternativa con storico piu' lungo."),
-    "Domanda - PPI Prodotti agricoli (generale)": ("indice 1982=100", "1913-2026", "Indice PPI generale dei prodotti agricoli USA — proxy della salute del settore agricolo/domanda di fertilizzanti."),
-    "Domanda - PPI Mais (USA)": ("indice 1982=100", "1971-2026", "Indice PPI del mais USA."),
-    "Domanda - PPI Soia (USA)": ("indice 1982=100", "1947-2026", "Indice PPI della soia USA."),
-    "Domanda - PPI Grano Hard Red Spring (USA)": ("indice 1982=100", "1947-2026", "Indice PPI del grano Hard Red Spring USA."),
-    "Domanda - PPI Grano Soft White (USA)": ("indice 1982=100", "1947-2026", "Indice PPI del grano Soft White USA."),
-    "Domanda - Prezzo mondiale Mais (IMF)": ("$/mt", "1992-2026", "Prezzo mondiale del mais, fonte FMI (non un indice)."),
-    "Domanda - Prezzo mondiale Soia (IMF)": ("$/mt", "1992-2026", "Prezzo mondiale della soia, fonte FMI (non un indice)."),
-    "Domanda - Prezzo mondiale Grano (IMF)": ("$/mt", "1992-2026", "Prezzo mondiale del grano, fonte FMI (non un indice)."),
+    "Azoto - PPI Ammoniaca e Urea (a monte)": ("indice", "2014-2026", "Indice PPI ammoniaca sintetica, acido nitrico, composti d'ammonio e urea — prodotti intermedi a monte del fertilizzante finito."),
+    "Azoto - PPI Fertilizzanti organici": ("indice", "2003-2026", "Indice PPI fertilizzanti di origine organica (settore azotati)."),
+    "Fosforo - PPI Acido fosforico e superfosfati": ("indice", "2009-2026", "Indice PPI acido fosforico, superfosfati e altri materiali fosfatici — prodotti intermedi a monte del fertilizzante fosfatico finito."),
+    "Fosforo - PPI Fosfati (storico dal 1947)": ("indice 1982=100", "1947-2026", "Indice PPI commodity per i fosfati, classificazione alternativa con storico piu' lungo."),
+    "Zolfo - PPI Acido solforico": ("indice dic 1982=100", "1973-2026", "Indice PPI acido solforico (NAICS 325180) — materia prima chiave per produrre acido fosforico, quindi DAP/TSP."),
+    "Agrochimici - PPI Settore agrochimico (totale)": ("indice", "1984-2026", "Indice PPI dell'intero settore pesticidi+fertilizzanti+agrochimici (NAICS 3253), aggregato."),
+    "Agricoltura - PPI Prodotti agricoli (generale)": ("indice 1982=100", "1913-2026", "Indice PPI generale dei prodotti agricoli USA (non solo cereali: anche bestiame, latticini, ecc.) — proxy della salute del settore agricolo/domanda di fertilizzanti."),
+    "Cereali - PPI Mais (USA)": ("indice 1982=100", "1971-2026", "Indice PPI del mais USA."),
+    "Oli e semi - PPI Soia (USA)": ("indice 1982=100", "1947-2026", "Indice PPI della soia USA."),
+    "Cereali - PPI Grano Hard Red Spring (USA)": ("indice 1982=100", "1947-2026", "Indice PPI del grano Hard Red Spring USA."),
+    "Cereali - PPI Grano Soft White (USA)": ("indice 1982=100", "1947-2026", "Indice PPI del grano Soft White USA."),
+    "Cereali - Prezzo mondiale Mais (IMF)": ("$/mt", "1992-2026", "Prezzo mondiale del mais, fonte FMI (non un indice)."),
+    "Oli e semi - Prezzo mondiale Soia (IMF)": ("$/mt", "1992-2026", "Prezzo mondiale della soia, fonte FMI (non un indice)."),
+    "Cereali - Prezzo mondiale Grano (IMF)": ("$/mt", "1992-2026", "Prezzo mondiale del grano, fonte FMI (non un indice)."),
 }
 
 SOURCES = {
@@ -294,6 +302,15 @@ def refresh_pink_sheet_file() -> None:
 
     global _pink_sheet_cache
     _pink_sheet_cache = None
+
+
+def pink_sheet_last_updated():
+    """Data (locale) in cui il file Pink Sheet e' stato scaricato/aggiornato l'ultima volta
+    su questa macchina (mtime del file), non la data dell'ultimo dato contenuto. None se il
+    file non esiste ancora."""
+    if not PINK_SHEET_PATH.exists():
+        return None
+    return datetime.datetime.fromtimestamp(PINK_SHEET_PATH.stat().st_mtime).date()
 
 
 def load_pink_sheet_prices() -> pd.DataFrame:
