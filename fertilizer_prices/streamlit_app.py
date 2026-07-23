@@ -106,6 +106,28 @@ with tab_series:
         st.error(chart_error)
     elif series_result:
         st.plotly_chart(charting.build_series_figure(series_result), use_container_width=True)
+
+        st.divider()
+
+        st.subheader("Statistiche mobili / volatilità")
+        window = st.slider(
+            "Finestra (numero di periodi)", min_value=3, max_value=36, value=12,
+            key="rolling_window",
+        )
+        for r in series_result:
+            s = r["series"].dropna()
+            if len(s) < window:
+                st.info(
+                    f"{r['label']} ({charting.series_title(r)}): solo {len(s)} punti, "
+                    f"insufficienti per una finestra di {window} periodi."
+                )
+                continue
+            rolling_df = stats.rolling_stats(s, window)
+            title = f"{r['label']}: {charting.series_title(r)}"
+            st.plotly_chart(
+                charting.build_rolling_stats_figure(r["label"], title, s, rolling_df, window),
+                use_container_width=True,
+            )
     else:
         st.info('Imposta i parametri nella barra laterale e premi "Aggiorna grafico".')
 
@@ -193,28 +215,6 @@ with tab_stats:
             "valore\" di ciascuna serie nella barra laterale prima di interpretare il segno "
             "e l'intensità."
         )
-
-        st.divider()
-
-        st.subheader("Statistiche mobili / volatilità")
-        window = st.slider(
-            "Finestra (numero di periodi)", min_value=3, max_value=36, value=12,
-            key="rolling_window",
-        )
-        for r in series_result:
-            s = r["series"].dropna()
-            if len(s) < window:
-                st.info(
-                    f"{r['label']} ({charting.series_title(r)}): solo {len(s)} punti, "
-                    f"insufficienti per una finestra di {window} periodi."
-                )
-                continue
-            rolling_df = stats.rolling_stats(s, window)
-            title = f"{r['label']}: {charting.series_title(r)}"
-            st.plotly_chart(
-                charting.build_rolling_stats_figure(r["label"], title, s, rolling_df, window),
-                use_container_width=True,
-            )
 
         st.divider()
 
