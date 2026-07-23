@@ -172,3 +172,64 @@ def build_residuals_figure(dates, residuals):
         showlegend=False,
     )
     return fig
+
+
+def build_correlation_heatmap(corr_df):
+    """Heatmap Plotly della matrice di correlazione (corr_df: DataFrame quadrata, output
+    di stats.correlation_matrix). Scala diverging centrata su 0, valori annotati in cella."""
+    fig = go.Figure(data=go.Heatmap(
+        z=corr_df.values,
+        x=list(corr_df.columns),
+        y=list(corr_df.index),
+        zmin=-1, zmax=1,
+        colorscale="RdBu_r",
+        colorbar=dict(title="ρ"),
+        text=np.round(corr_df.values, 2),
+        texttemplate="%{text}",
+        hovertemplate="%{y} vs %{x}: %{z:.3f}<extra></extra>",
+    ))
+    fig.update_layout(
+        height=max(320, 60 * len(corr_df) + 100),
+        margin=dict(l=40, r=40, t=30, b=40),
+        yaxis=dict(autorange="reversed"),
+    )
+    return fig
+
+
+def build_rolling_stats_figure(label, title, series, rolling_df, window):
+    """Grafico per una singola serie: valore originale (linea sottile), media mobile
+    (linea in evidenza) e banda ±1 std mobile (area ombreggiata) attorno alla media."""
+    fig = go.Figure()
+
+    band_upper = rolling_df["mean"] + rolling_df["std"]
+    band_lower = rolling_df["mean"] - rolling_df["std"]
+
+    fig.add_trace(go.Scatter(
+        x=rolling_df.index, y=band_upper, mode="lines",
+        line=dict(width=0), showlegend=False, hoverinfo="skip",
+    ))
+    fig.add_trace(go.Scatter(
+        x=rolling_df.index, y=band_lower, mode="lines",
+        line=dict(width=0), fill="tonexty",
+        fillcolor="rgba(70,110,230,0.15)",
+        name=f"±1 dev. std (finestra {window})", hoverinfo="skip",
+    ))
+    fig.add_trace(go.Scatter(
+        x=series.index, y=series.values, mode="lines",
+        line=dict(color="rgba(120,120,120,0.6)", width=1),
+        name=f"{label} (valore)",
+    ))
+    fig.add_trace(go.Scatter(
+        x=rolling_df.index, y=rolling_df["mean"], mode="lines",
+        line=dict(color="rgb(220,40,40)", width=2),
+        name=f"Media mobile ({window})",
+    ))
+
+    fig.update_layout(
+        title=title,
+        height=280,
+        margin=dict(l=40, r=40, t=40, b=30),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+        hovermode="x unified",
+    )
+    return fig

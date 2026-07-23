@@ -8,6 +8,7 @@ import charting
 import data
 import regression
 import series_config
+import stats
 
 st.set_page_config(page_title="Serie storiche prezzi fertilizzanti", layout="wide")
 
@@ -98,7 +99,7 @@ if refresh:
 chart_error = st.session_state.get("chart_error")
 series_result = st.session_state.get("series_result")
 
-tab_series, tab_regression = st.tabs(["Serie storiche", "Regressione"])
+tab_series, tab_regression, tab_stats = st.tabs(["Serie storiche", "Regressione", "Statistiche"])
 
 with tab_series:
     if chart_error:
@@ -162,3 +163,71 @@ with tab_regression:
                     charting.build_residuals_figure(y_actual.index, residuals),
                     use_container_width=True,
                 )
+
+with tab_stats:
+    if not series_result:
+        st.info("Calcola prima le serie nella tab \"Serie storiche\".")
+    else:
+        st.subheader("Matrice di correlazione")
+        if len(series_result) < 2:
+            st.info("Servono almeno due serie attive per calcolare una matrice di correlazione.")
+        else:
+            frame = stats.build_aligned_frame(series_result)
+            corr_df = stats.correlation_matrix(frame)
+            if corr_df.isna().all().all():
+                st.warning(
+                    "Nessuna data in comune (o serie costanti) tra le serie attive: "
+                    "correlazione non calcolabile."
+                )
+            else:
+                st.plotly_chart(charting.build_correlation_heatmap(corr_df), use_container_width=True)
+                if corr_df.isna().any().any():
+                    st.caption(
+                        "Nota: alcune coppie di serie non hanno date in comune sufficienti "
+                        "(cella vuota/NaN) oppure una delle due è costante nel periodo comune."
+                    )
+        st.caption(
+            "Le serie in \"Variazione %\" e quelle in \"Valore assoluto\" sono correlate "
+            "insieme: la correlazione resta matematicamente valida, ma confronta grandezze "
+            "diverse (livello vs variazione periodo su periodo) — controlla il \"Tipo di "
+            "valore\" di ciascuna serie nella barra laterale prima di interpretare il segno "
+            "e l'intensità."
+        )
+
+        st.divider()
+
+        st.subheader("Statistiche mobili / volatilità")
+        window = st.slider(
+            "Finestra (numero di periodi)", min_value=3, max_value=36, value=12,
+            key="rolling_window",
+        )
+        for r in series_result:
+            s = r["series"].dropna()
+            if len(s) < window:
+                st.info(
+                    f"{r['label']} ({charting.series_title(r)}): solo {len(s)} punti, "
+                    f"insufficienti per una finestra di {window} periodi."
+                )
+                continue
+            rolling_df = stats.rolling_stats(s, window)
+            title = f"{r['label']}: {charting.series_title(r)}"
+            st.plotly_chart(
+                charting.build_rolling_stats_figure(r["label"], title, s, rolling_df, window),
+                use_container_width=True,
+            )
+
+        st.divider()
+
+        st.subheader("Statistiche descrittive")
+        desc_df = stats.descriptive_stats(series_result)
+        if desc_df.empty:
+            st.info("Nessuna serie con dati disponibili.")
+        else:
+            st.dataframe(
+                desc_df.style.format({
+                    "Media": "{:.3f}", "Dev. std": "{:.3f}", "Min": "{:.3f}",
+                    "Max": "{:.3f}", "Valore attuale": "{:.3f}",
+                    "Percentile attuale": "{:.1f}",
+                }),
+                use_container_width=True,
+            )
