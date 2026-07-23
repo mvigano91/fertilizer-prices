@@ -402,3 +402,15 @@ def get_series(
         series = series.pct_change().dropna() * 100
 
     return series
+
+
+def get_all_series(source: str, years_back: int, granularity: str, mode: str) -> dict:
+    """Carica tutte le serie di 'source' (es. l'intero catalogo World Bank Pink Sheet),
+    una per ciascuna etichetta prodotto in SOURCES[source]. Salta silenziosamente i
+    prodotti che risultano vuoti dopo il filtro/resample. Ritorna {label: pd.Series}."""
+    result = {}
+    for label in SOURCES[source]:
+        series = get_series(source, label, years_back, granularity, mode)
+        if not series.empty:
+            result[label] = series
+    return result

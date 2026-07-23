@@ -176,23 +176,36 @@ def build_residuals_figure(dates, residuals):
 
 def build_correlation_heatmap(corr_df):
     """Heatmap Plotly della matrice di correlazione (corr_df: DataFrame quadrata, output
-    di stats.correlation_matrix). Scala diverging centrata su 0, valori annotati in cella."""
-    fig = go.Figure(data=go.Heatmap(
+    di stats.correlation_matrix). Scala diverging centrata su 0. Per matrici piccole
+    (poche serie selezionate a mano) i valori sono annotati in cella; per matrici grandi
+    (es. l'intero catalogo WBPS, ~71 prodotti) le annotazioni vengono omesse — diventerebbero
+    illeggibili a quella densita' — e l'hover resta il modo principale di leggere i valori."""
+    n = len(corr_df)
+    large = n > 15
+
+    heatmap_kwargs = dict(
         z=corr_df.values,
         x=list(corr_df.columns),
         y=list(corr_df.index),
         zmin=-1, zmax=1,
         colorscale="RdBu_r",
         colorbar=dict(title="ρ"),
-        text=np.round(corr_df.values, 2),
-        texttemplate="%{text}",
         hovertemplate="%{y} vs %{x}: %{z:.3f}<extra></extra>",
-    ))
+    )
+    if not large:
+        heatmap_kwargs["text"] = np.round(corr_df.values, 2)
+        heatmap_kwargs["texttemplate"] = "%{text}"
+
+    fig = go.Figure(data=go.Heatmap(**heatmap_kwargs))
+    height = max(320, 16 * n + 200) if large else max(320, 60 * n + 100)
     fig.update_layout(
-        height=max(320, 60 * len(corr_df) + 100),
+        height=height,
         margin=dict(l=40, r=40, t=30, b=40),
         yaxis=dict(autorange="reversed"),
     )
+    if large:
+        fig.update_xaxes(tickfont=dict(size=8))
+        fig.update_yaxes(tickfont=dict(size=8))
     return fig
 
 
