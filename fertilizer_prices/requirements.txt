@@ -2,5 +2,5 @@ pandas
 openpyxl
 matplotlib
 requests
-streamlit
+streamlit>=1.31
 plotly

@@ -273,6 +273,20 @@ def resolve_series(years_back, granularity, series_list):
     return [{**s, "series": resolved[s["label"]]} for s in series_list]
 
 
+def resolve_catalog_labels(years_back, granularity, combined_labels):
+    """Risolve una lista di etichette combinate di PRODUCT_CATALOG in
+    {etichetta_combinata: pd.Series}, usando data.get_series con mode="Valore assoluto".
+    Salta silenziosamente le etichette vuote dopo fetch/resample. Puo' sollevare
+    data.FredApiKeyMissing / data.FredRequestError / ValueError (non catturati qui)."""
+    result = {}
+    for combined_label in combined_labels:
+        source, product = PRODUCT_CATALOG[combined_label]
+        series = data.get_series(source, product, years_back, granularity, "Valore assoluto")
+        if not series.empty:
+            result[combined_label] = series
+    return result
+
+
 def parse_regression_roles(series_result):
     """Legge il campo 'regression_role' di ciascuna serie gia' risolta e determina Y/X.
 

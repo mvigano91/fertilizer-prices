@@ -273,6 +273,8 @@ class PinkSheetRefreshError(Exception):
 
 _pink_sheet_cache = None
 
+_fred_cache = {}
+
 
 def refresh_pink_sheet_file() -> None:
     """Scarica l'ultima versione del file Pink Sheet dal sito World Bank e sovrascrive
@@ -335,7 +337,11 @@ def load_pink_sheet_prices() -> pd.DataFrame:
 
 
 def load_fred_series(series_id: str) -> pd.Series:
-    """Scarica una serie FRED via REST API. Richiede FRED_API_KEY nell'ambiente."""
+    """Scarica una serie FRED via REST API (con cache in memoria per processo — vedi
+    _fred_cache). Richiede FRED_API_KEY nell'ambiente."""
+    if series_id in _fred_cache:
+        return _fred_cache[series_id]
+
     api_key = os.environ.get("FRED_API_KEY")
     if not api_key:
         raise FredApiKeyMissing(
@@ -359,6 +365,7 @@ def load_fred_series(series_id: str) -> pd.Series:
     dates = [pd.to_datetime(o["date"]) for o in observations]
     values = [float(o["value"]) if o["value"] != "." else float("nan") for o in observations]
     series = pd.Series(values, index=pd.DatetimeIndex(dates), name=series_id).dropna()
+    _fred_cache[series_id] = series
     return series
 
 
