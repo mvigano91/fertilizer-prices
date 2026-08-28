@@ -14,7 +14,32 @@
       "Artifact",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(grep -io \"streamlit\" /tmp/streamlit_page.html | head -1; grep -i \"exception\\\\|traceback\" /tmp/streamlit_log.txt || echo \"nessun errore nel log\")",
+      "Read(//tmp/**)",
+      "Bash(python -c ' *)",
+      "Bash(pkill -f \"streamlit run\")",
+      "Bash(git pull *)",
+      "Bash(ls -la \"C:/Users/MARTA/.claude/projects/c--Users-MARTA-Python-ClaudeCodeTest/memory/\")",
+      "Read(//c/Users/MARTA/.claude/projects/c--Users-MARTA-Python-ClaudeCodeTest/memory/**)",
+      "Bash(pip show *)",
+      "Bash(streamlit run *)",
+      "Bash(mkdir -p ~/.streamlit)",
+      "Bash(printf '[general]\\\\nemail = \"\"\\\\n')",
+      "Read(//c/Users/MARTA/.streamlit/**)",
+      "Bash(pip install *)",
+      "WebFetch(domain:www.worldbank.org)",
+      "Bash(curl -s -A \"Mozilla/5.0\" \"https://www.worldbank.org/en/research/commodity-markets\" -o /tmp/wb_page.html)",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"Name='streamlit.exe'\" | ForEach-Object { Stop-Process -Id $_.ProcessId -Force })",
+      "Bash(python -c \"import stats, charting, streamlit_app\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8501)",
+      "Bash(python -c \"import data, stats, charting, series_config, streamlit_app\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8501 --max-time 10)",
+      "Bash(netstat -ano)",
+      "Bash(curl -4 -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:8501 --max-time 8)"
     ]
   }
 }

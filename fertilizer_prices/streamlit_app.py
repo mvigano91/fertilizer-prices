@@ -54,6 +54,13 @@ def _remove_custom_item(label):
     st.session_state.setdefault("stats_custom_working", set()).discard(label)
 
 
+def _clear_custom_working():
+    """Svuota la selezione in corso senza chiudere il dialog: azzera solo l'insieme
+    canonico, lasciando invariata quella gia' confermata (stats_custom_selection)
+    finche' non si preme OK."""
+    st.session_state.setdefault("stats_custom_working", set()).clear()
+
+
 @st.dialog("Selezione personalizzata", width="large")
 def _custom_data_dialog():
     """Checklist in stile filtro Excel: a sinistra i prodotti filtrabili per testo con
@@ -101,7 +108,15 @@ def _custom_data_dialog():
     selected = [lbl for lbl in all_labels if lbl in working]
 
     with col_selected:
-        st.caption(f"Selezionati: {len(selected)}")
+        head_l, head_r = st.columns([2, 1])
+        with head_l:
+            st.caption(f"Selezionati: {len(selected)}")
+        with head_r:
+            st.button(
+                "Deseleziona tutto", key="stats_custom_clear_all",
+                disabled=not selected, on_click=_clear_custom_working,
+                use_container_width=True,
+            )
         with st.container(height=350, border=True):
             for lbl in selected:
                 col_lbl, col_x = st.columns([5, 1])
