@@ -90,7 +90,7 @@ def descriptive_stats(series_result, months=None):
     return pd.DataFrame(rows).set_index("Serie")
 
 
-def descriptive_stats_by_label(series_by_label):
+def descriptive_stats_by_label(series_by_label, months=None):
     """Tabella riassuntiva, una riga per prodotto: Media, Dev. std, Min, Max, Valore
     attuale, Percentile attuale. Come descriptive_stats, ma per un dict {label:
     pd.Series} invece della forma a lista di dict delle serie configurate in sidebar —
@@ -98,6 +98,8 @@ def descriptive_stats_by_label(series_by_label):
     rows = []
     for label, series in series_by_label.items():
         s = series.dropna()
+        if months is not None:
+            s = last_n_months(s, months)
         if s.empty:
             continue
         rows.append({

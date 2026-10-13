@@ -28,6 +28,33 @@ def _desc_window_text(option):
     return f"{n} mesi"
 
 
+def _desc_window_selector(key_prefix, years_back):
+    """Menu del periodo + bottone "Aggiorna" sopra una tabella di statistiche descrittive.
+    Ritorna il numero di mesi del periodo confermato con "Aggiorna" (non di quello appena
+    scelto nel menu). Lo stato vive in `<key_prefix>_window` / `<key_prefix>_window_applied`:
+    chi ricalcola i dati li cancella per far ripartire la tabella dall'intero periodo."""
+    window_options = _desc_window_options(years_back)
+    col_window, col_apply, _ = st.columns([1, 1, 4], vertical_alignment="bottom")
+    with col_window:
+        st.selectbox(
+            "Periodo", list(window_options), key=f"{key_prefix}_window",
+            label_visibility="collapsed",
+        )
+    with col_apply:
+        if st.button("Aggiorna", key=f"{key_prefix}_window_apply"):
+            st.session_state[f"{key_prefix}_window_applied"] = st.session_state[f"{key_prefix}_window"]
+    applied = st.session_state.get(f"{key_prefix}_window_applied")
+    if applied not in window_options:
+        applied = next(iter(window_options))
+    st.caption(f"Statistiche calcolate sugli ultimi {_desc_window_text(applied)} di ciascuna serie.")
+    return window_options[applied]
+
+
+def _reset_desc_window(key_prefix):
+    st.session_state.pop(f"{key_prefix}_window_applied", None)
+    st.session_state.pop(f"{key_prefix}_window", None)
+
+
 def _style_descriptive_stats(desc_df):
     """Formattazione condivisa per le tabelle di statistiche descrittive: una cifra
     decimale per i valori in unita' originale, due per lo z-score, valori centrati, e un
@@ -241,8 +268,7 @@ if refresh:
             st.session_state["series_result"] = results
             st.session_state["series_years_back"] = years_back
             # Nuovo grafico: la tabella descrittiva riparte dall'intero periodo.
-            st.session_state.pop("desc_window_applied", None)
-            st.session_state.pop("desc_window", None)
+            _reset_desc_window("desc")
 
 # Il grafico resta visibile (invariato) finche' non si preme di nuovo "Aggiorna grafico",
 # anche se nel frattempo si cambia un controllo nella barra laterale.
@@ -260,21 +286,8 @@ with tab_series:
         st.divider()
 
         st.subheader("Statistiche descrittive")
-        window_options = _desc_window_options(st.session_state.get("series_years_back", 1))
-        col_window, col_apply, _ = st.columns([1, 1, 4], vertical_alignment="bottom")
-        with col_window:
-            st.selectbox(
-                "Periodo", list(window_options), key="desc_window", label_visibility="collapsed",
-            )
-        with col_apply:
-            if st.button("Aggiorna", key="desc_window_apply"):
-                st.session_state["desc_window_applied"] = st.session_state["desc_window"]
-        # La tabella usa il periodo confermato con "Aggiorna", non quello appena scelto nel menu.
-        applied = st.session_state.get("desc_window_applied")
-        if applied not in window_options:
-            applied = next(iter(window_options))
-        st.caption(f"Statistiche calcolate sugli ultimi {_desc_window_text(applied)} di ciascuna serie.")
-        desc_df = stats.descriptive_stats(series_result, months=window_options[applied])
+        months = _desc_window_selector("desc", st.session_state.get("series_years_back", 1))
+        desc_df = stats.descriptive_stats(series_result, months=months)
         if desc_df.empty:
             st.info("Nessuna serie con dati disponibili.")
         else:
@@ -428,6 +441,8 @@ with tab_stats:
             else:
                 st.session_state["stats_tab_error"] = None
                 st.session_state["stats_tab_result"] = series_by_label
+                st.session_state["stats_tab_years"] = int(stats_years)
+                _reset_desc_window("stats_desc")
 
     # Il risultato resta visibile finche' non si preme di nuovo "Calcola", anche se nel
     # frattempo si cambiano i controlli sopra o quelli della barra laterale.
@@ -459,7 +474,8 @@ with tab_stats:
         st.divider()
 
         st.subheader("Statistiche descrittive")
-        desc_df = stats.descriptive_stats_by_label(stats_result)
+        months = _desc_window_selector("stats_desc", st.session_state.get("stats_tab_years", 1))
+        desc_df = stats.descriptive_stats_by_label(stats_result, months=months)
         if desc_df.empty:
             st.info("Nessun prodotto con dati disponibili.")
         else:
