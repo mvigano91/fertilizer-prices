@@ -10,7 +10,7 @@ import regression
 import series_config
 import stats
 
-st.set_page_config(page_title="Serie storiche prezzi fertilizzanti", layout="wide")
+st.set_page_config(page_title="Serie storiche prezzi", layout="wide")
 
 
 def _desc_window_options(years_back):
@@ -207,12 +207,6 @@ st.markdown(
     div.block-container {
         padding-top: 1.2rem;
     }
-    div[data-testid="stHeading"] h1,
-    div[data-testid="stMarkdownContainer"] h1 {
-        font-size: 1.3rem !important;
-        margin-bottom: 0.3rem !important;
-        padding-bottom: 0 !important;
-    }
     .st-key-pink_sheet_refresh_container {
         margin-bottom: 0.8rem;
     }
@@ -248,7 +242,8 @@ except Exception:
 if _fred_secret and not os.environ.get("FRED_API_KEY"):
     os.environ["FRED_API_KEY"] = _fred_secret
 
-st.title("Serie storiche prezzi fertilizzanti")
+# Subheader (non st.title) cosi' il titolo ha la stessa dimensione delle intestazioni di sezione.
+st.subheader("Serie storiche prezzi")
 
 years_text, granularity, series_list, refresh = series_config.render_sidebar()
 
