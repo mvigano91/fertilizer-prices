@@ -240,6 +240,16 @@ with tab_series:
 
         st.divider()
 
+        st.subheader("Statistiche descrittive")
+        desc_df = stats.descriptive_stats(series_result)
+        if desc_df.empty:
+            st.info("Nessuna serie con dati disponibili.")
+        else:
+            st.dataframe(_style_descriptive_stats(desc_df), use_container_width=True)
+            st.caption("Colore dello Z-score: 🔵 economico rispetto allo storico — 🔴 caro rispetto allo storico")
+
+        st.divider()
+
         st.subheader("Statistiche mobili / volatilità")
         window = st.slider(
             "Finestra (numero di periodi)", min_value=3, max_value=36, value=12,
@@ -259,16 +269,6 @@ with tab_series:
                 charting.build_rolling_stats_figure(r["label"], title, s, rolling_df, window),
                 use_container_width=True,
             )
-
-        st.divider()
-
-        st.subheader("Statistiche descrittive")
-        desc_df = stats.descriptive_stats(series_result)
-        if desc_df.empty:
-            st.info("Nessuna serie con dati disponibili.")
-        else:
-            st.dataframe(_style_descriptive_stats(desc_df), use_container_width=True)
-            st.caption("Colore dello Z-score: 🔵 economico rispetto allo storico — 🔴 caro rispetto allo storico")
     else:
         st.info('Imposta i parametri nella barra laterale e premi "Aggiorna grafico".')
 

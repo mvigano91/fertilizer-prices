@@ -239,9 +239,11 @@ def build_rolling_stats_figure(label, title, series, rolling_df, window):
     ))
 
     fig.update_layout(
-        title=title,
-        height=280,
-        margin=dict(l=40, r=40, t=40, b=30),
+        # Titolo ancorato in cima al contenitore e margine superiore ampio: la legenda
+        # orizzontale sta sopra l'area del grafico e con t=40 finiva sotto il titolo.
+        title=dict(text=title, yref="container", y=1, yanchor="top", pad=dict(t=12)),
+        height=310,
+        margin=dict(l=40, r=40, t=75, b=30),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
         hovermode="x unified",
     )
