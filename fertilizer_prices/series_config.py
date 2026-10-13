@@ -7,6 +7,8 @@ UI: risolve le serie una sola volta, il risultato viene riusato ovunque serva (g
 serie storiche, tab di regressione, ecc.) senza rifare fetch dei dati.
 """
 
+import re
+
 import streamlit as st
 
 import data
@@ -48,24 +50,74 @@ def _default_regression_role(label):
     return "—"
 
 
-def render_series_controls(label, first=False):
+_SERIES_WIDGET_PREFIXES = ("axis", "pad", "role", "formula", "product", "mode")
+
+
+def _renumber_formula(formula, deleted_index):
+    """Aggiorna i riferimenti S<n> di una formula Pad dopo l'eliminazione di S<deleted_index>:
+    le serie successive scalano di uno, i riferimenti alla serie eliminata diventano un nome
+    inesistente (cosi' resolve_pad_formulas segnala l'errore invece di puntare alla serie sbagliata)."""
+    def repl(match):
+        n = int(match.group(1))
+        if n < deleted_index:
+            return match.group(0)
+        if n == deleted_index:
+            return f"S{n}_eliminata"
+        return f"S{n - 1}"
+    return re.sub(r"\bS(\d+)\b", repl, formula)
+
+
+def _delete_series(index):
+    """Callback del cestino: elimina S<index> spostando lo stato dei widget di S<index+1>..Sn
+    indietro di una posizione. Gira come on_click, cioe' prima che i widget vengano ridisegnati,
+    l'unico momento in cui Streamlit consente di riscriverne lo stato."""
+    state = st.session_state
+    n = state["num_series"]
+    for j in range(index, n):
+        for prefix in _SERIES_WIDGET_PREFIXES:
+            src, dst = f"{prefix}_S{j + 1}", f"{prefix}_S{j}"
+            if src in state:
+                state[dst] = state[src]
+            else:
+                state.pop(dst, None)
+    for prefix in _SERIES_WIDGET_PREFIXES:
+        state.pop(f"{prefix}_S{n}", None)
+    state["num_series"] = n - 1
+    for j in range(1, n):
+        key = f"formula_S{j}"
+        if state.get(key):
+            state[key] = _renumber_formula(state[key], index)
+
+
+def render_series_controls(label, first=False, deletable=False):
     """Disegna i controlli di una singola serie e ritorna il suo dict di definizione."""
     if not first:
         st.markdown('<div class="series-gap"></div>', unsafe_allow_html=True)
-    col_label, col_axis, col_pad, col_role = st.columns([0.8, 1.3, 0.9, 1.3])
+    col_label, col_delete, col_axis, col_pad, col_role = st.columns([0.5, 0.4, 1.3, 0.9, 1.3])
     with col_label:
         st.markdown(f"**{label}**")
+    with col_delete:
+        if deletable:
+            st.button(
+                ":material/delete:", key=f"delete_{label}", type="tertiary",
+                help=f"Elimina {label}", on_click=_delete_series, args=(int(label[1:]),),
+            )
     with col_axis:
+        # Default passato solo alla prima creazione: dopo un'eliminazione lo stato e' gia'
+        # stato scritto da _delete_series e Streamlit avvisa se riceve anche un default.
+        axis_default = {} if f"axis_{label}" in st.session_state else {"default": "L"}
         axis = st.segmented_control(
-            "Asse", options=["L", "R"], default="L", key=f"axis_{label}",
+            "Asse", options=["L", "R"], key=f"axis_{label}", **axis_default,
             label_visibility="collapsed",
         )
     with col_pad:
         is_pad = st.checkbox("Pad", key=f"pad_{label}")
     with col_role:
-        default_role_index = REGRESSION_ROLE_OPTIONS.index(_default_regression_role(label))
+        role_default = {} if f"role_{label}" in st.session_state else {
+            "index": REGRESSION_ROLE_OPTIONS.index(_default_regression_role(label)),
+        }
         regression_role = st.selectbox(
-            "Ruolo regressione", REGRESSION_ROLE_OPTIONS, index=default_role_index,
+            "Ruolo regressione", REGRESSION_ROLE_OPTIONS, **role_default,
             key=f"role_{label}", label_visibility="collapsed",
         )
 
@@ -134,8 +186,9 @@ def render_sidebar():
 
         st.divider()
 
+        deletable = st.session_state["num_series"] > 1
         series_list = [
-            render_series_controls(f"S{i}", first=(i == 1))
+            render_series_controls(f"S{i}", first=(i == 1), deletable=deletable)
             for i in range(1, st.session_state["num_series"] + 1)
         ]
 
