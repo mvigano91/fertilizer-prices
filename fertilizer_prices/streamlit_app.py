@@ -204,8 +204,17 @@ st.markdown(
     .legend-gap {
         margin-top: 1.8rem;
     }
+    /* Il contenuto deve partire sotto la barra fissa di Streamlit in alto (~3.75rem),
+       altrimenti il titolo della pagina (un subheader, senza il margine di st.title)
+       finisce coperto. */
     div.block-container {
-        padding-top: 1.2rem;
+        padding-top: 4rem;
+    }
+    /* Tutte le intestazioni (titolo pagina e sezioni) alla stessa dimensione compatta. */
+    div[data-testid="stHeading"] h1,
+    div[data-testid="stHeading"] h2,
+    div[data-testid="stHeading"] h3 {
+        font-size: 1.3rem !important;
     }
     .st-key-pink_sheet_refresh_container {
         margin-bottom: 0.8rem;
@@ -242,8 +251,9 @@ except Exception:
 if _fred_secret and not os.environ.get("FRED_API_KEY"):
     os.environ["FRED_API_KEY"] = _fred_secret
 
-# Subheader (non st.title) cosi' il titolo ha la stessa dimensione delle intestazioni di sezione.
-st.subheader("Serie storiche prezzi")
+# anchor=False su tutti i titoli: con un'ancora (#...) nell'URL, Streamlit riportava la
+# pagina su quella sezione ad ogni rerun (es. dopo "Aggiorna grafico").
+st.subheader("Serie storiche prezzi", anchor=False)
 
 years_text, granularity, series_list, refresh = series_config.render_sidebar()
 
@@ -280,7 +290,7 @@ with tab_series:
 
         st.divider()
 
-        st.subheader("Statistiche descrittive")
+        st.subheader("Statistiche descrittive", anchor=False)
         months = _desc_window_selector("desc", st.session_state.get("series_years_back", 1))
         desc_df = stats.descriptive_stats(series_result, months=months)
         if desc_df.empty:
@@ -291,7 +301,7 @@ with tab_series:
 
         st.divider()
 
-        st.subheader("Statistiche mobili / volatilità")
+        st.subheader("Statistiche mobili / volatilità", anchor=False)
         window = st.slider(
             "Finestra (numero di periodi)", min_value=3, max_value=36, value=12,
             key="rolling_window",
@@ -369,7 +379,7 @@ with tab_regression:
                 )
 
 with tab_stats:
-    st.subheader("Impostazioni")
+    st.subheader("Impostazioni", anchor=False)
     col_years, col_gran, col_btn = st.columns([1, 1, 1])
     with col_years:
         stats_years = st.number_input(
@@ -454,7 +464,7 @@ with tab_stats:
     elif len(stats_result) < 2:
         st.info("Dati insufficienti per calcolare una matrice di correlazione (servono almeno 2 serie con dati).")
     else:
-        st.subheader("Matrice di correlazione")
+        st.subheader("Matrice di correlazione", anchor=False)
         months = _desc_window_selector(
             "stats_corr", st.session_state.get("stats_tab_years", 1),
             scope="(contati dalla data più recente tra tutti i prodotti)",
@@ -473,7 +483,7 @@ with tab_stats:
 
         st.divider()
 
-        st.subheader("Statistiche descrittive")
+        st.subheader("Statistiche descrittive", anchor=False)
         months = _desc_window_selector("stats_desc", st.session_state.get("stats_tab_years", 1))
         desc_df = stats.descriptive_stats_by_label(stats_result, months=months)
         if desc_df.empty:
