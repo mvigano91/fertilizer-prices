@@ -28,7 +28,7 @@ def _desc_window_text(option):
     return f"{n} mesi"
 
 
-def _desc_window_selector(key_prefix, years_back):
+def _desc_window_selector(key_prefix, years_back, scope="di ciascuna serie"):
     """Menu del periodo + bottone "Aggiorna" sopra una tabella di statistiche descrittive.
     Ritorna il numero di mesi del periodo confermato con "Aggiorna" (non di quello appena
     scelto nel menu). Lo stato vive in `<key_prefix>_window` / `<key_prefix>_window_applied`:
@@ -46,7 +46,7 @@ def _desc_window_selector(key_prefix, years_back):
     applied = st.session_state.get(f"{key_prefix}_window_applied")
     if applied not in window_options:
         applied = next(iter(window_options))
-    st.caption(f"Statistiche calcolate sugli ultimi {_desc_window_text(applied)} di ciascuna serie.")
+    st.caption(f"Statistiche calcolate sugli ultimi {_desc_window_text(applied)} {scope}.")
     return window_options[applied]
 
 
@@ -443,6 +443,7 @@ with tab_stats:
                 st.session_state["stats_tab_result"] = series_by_label
                 st.session_state["stats_tab_years"] = int(stats_years)
                 _reset_desc_window("stats_desc")
+                _reset_desc_window("stats_corr")
 
     # Il risultato resta visibile finche' non si preme di nuovo "Calcola", anche se nel
     # frattempo si cambiano i controlli sopra o quelli della barra laterale.
@@ -459,7 +460,11 @@ with tab_stats:
         st.info("Dati insufficienti per calcolare una matrice di correlazione (servono almeno 2 serie con dati).")
     else:
         st.subheader("Matrice di correlazione")
-        frame = stats.build_aligned_frame(stats_result)
+        months = _desc_window_selector(
+            "stats_corr", st.session_state.get("stats_tab_years", 1),
+            scope="(contati dalla data più recente tra tutti i prodotti)",
+        )
+        frame = stats.last_n_months(stats.build_aligned_frame(stats_result), months)
         corr_df = stats.correlation_matrix(frame)
         if corr_df.isna().all().all():
             st.warning("Nessuna data in comune tra i prodotti: correlazione non calcolabile.")

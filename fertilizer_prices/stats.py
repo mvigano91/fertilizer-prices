@@ -58,7 +58,9 @@ def zscore_of_last(series):
 
 def last_n_months(series, months):
     """Ultimi `months` mesi della serie, contati a ritroso dalla sua ultima data (non da
-    oggi: per una serie interrotta, marcata con *, sono i suoi ultimi mesi disponibili)."""
+    oggi: per una serie interrotta, marcata con *, sono i suoi ultimi mesi disponibili).
+    Funziona anche su una DataFrame allineata (build_aligned_frame): li' l'ultima data e'
+    la piu' recente tra tutte le colonne, cosi' le serie restano confrontate sulle stesse date."""
     if series.empty:
         return series
     return series[series.index > series.index[-1] - pd.DateOffset(months=months)]
