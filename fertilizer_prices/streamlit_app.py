@@ -146,8 +146,9 @@ st.markdown(
     section[data-testid="stSidebar"] {
         font-size: 0.85rem;
     }
-    section[data-testid="stSidebar"] > div:first-child {
+    section[data-testid="stSidebar"][aria-expanded="true"] {
         width: 380px !important;
+        min-width: 380px !important;
     }
     section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
         gap: 0.05rem;
@@ -164,9 +165,11 @@ st.markdown(
     div.block-container {
         padding-top: 1.2rem;
     }
-    h1 {
-        font-size: 1.3rem;
-        margin-bottom: 0.3rem;
+    div[data-testid="stHeading"] h1,
+    div[data-testid="stMarkdownContainer"] h1 {
+        font-size: 1.3rem !important;
+        margin-bottom: 0.3rem !important;
+        padding-bottom: 0 !important;
     }
     .st-key-pink_sheet_refresh_container {
         margin-bottom: 0.8rem;
