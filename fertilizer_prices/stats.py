@@ -56,13 +56,24 @@ def zscore_of_last(series):
     return float((series.iloc[-1] - series.mean()) / std)
 
 
-def descriptive_stats(series_result):
+def last_n_months(series, months):
+    """Ultimi `months` mesi della serie, contati a ritroso dalla sua ultima data (non da
+    oggi: per una serie interrotta, marcata con *, sono i suoi ultimi mesi disponibili)."""
+    if series.empty:
+        return series
+    return series[series.index > series.index[-1] - pd.DateOffset(months=months)]
+
+
+def descriptive_stats(series_result, months=None):
     """Tabella riassuntiva, una riga per serie: Media, Dev. std, Min, Max, Valore
     attuale, Percentile attuale (rispetto al proprio storico). Ogni serie usa il proprio
-    storico completo, senza allineamento con le altre."""
+    storico, senza allineamento con le altre; con `months` lo storico e' limitato agli
+    ultimi `months` mesi di ciascuna serie (vedi last_n_months)."""
     rows = []
     for r in series_result:
         s = r["series"].dropna()
+        if months is not None:
+            s = last_n_months(s, months)
         if s.empty:
             continue
         rows.append({

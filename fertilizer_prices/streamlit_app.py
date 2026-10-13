@@ -13,6 +13,21 @@ import stats
 st.set_page_config(page_title="Serie storiche prezzi fertilizzanti", layout="wide")
 
 
+def _desc_window_options(years_back):
+    """Opzioni del periodo delle statistiche descrittive -> numero di mesi: da `years_back`
+    anni (il massimo, quello usato per il grafico) a 1 anno, poi 9, 6 e 3 mesi."""
+    options = {f"{y}y": y * 12 for y in range(years_back, 0, -1)}
+    options.update({"9m": 9, "6m": 6, "3m": 3})
+    return options
+
+
+def _desc_window_text(option):
+    n, unit = int(option[:-1]), option[-1]
+    if unit == "y":
+        return "12 mesi" if n == 1 else f"{n} anni"
+    return f"{n} mesi"
+
+
 def _style_descriptive_stats(desc_df):
     """Formattazione condivisa per le tabelle di statistiche descrittive: una cifra
     decimale per i valori in unita' originale, due per lo z-score, valori centrati, e un
@@ -224,6 +239,10 @@ if refresh:
         else:
             st.session_state["chart_error"] = None
             st.session_state["series_result"] = results
+            st.session_state["series_years_back"] = years_back
+            # Nuovo grafico: la tabella descrittiva riparte dall'intero periodo.
+            st.session_state.pop("desc_window_applied", None)
+            st.session_state.pop("desc_window", None)
 
 # Il grafico resta visibile (invariato) finche' non si preme di nuovo "Aggiorna grafico",
 # anche se nel frattempo si cambia un controllo nella barra laterale.
@@ -241,7 +260,21 @@ with tab_series:
         st.divider()
 
         st.subheader("Statistiche descrittive")
-        desc_df = stats.descriptive_stats(series_result)
+        window_options = _desc_window_options(st.session_state.get("series_years_back", 1))
+        col_window, col_apply, _ = st.columns([1, 1, 4], vertical_alignment="bottom")
+        with col_window:
+            st.selectbox(
+                "Periodo", list(window_options), key="desc_window", label_visibility="collapsed",
+            )
+        with col_apply:
+            if st.button("Aggiorna", key="desc_window_apply"):
+                st.session_state["desc_window_applied"] = st.session_state["desc_window"]
+        # La tabella usa il periodo confermato con "Aggiorna", non quello appena scelto nel menu.
+        applied = st.session_state.get("desc_window_applied")
+        if applied not in window_options:
+            applied = next(iter(window_options))
+        st.caption(f"Statistiche calcolate sugli ultimi {_desc_window_text(applied)} di ciascuna serie.")
+        desc_df = stats.descriptive_stats(series_result, months=window_options[applied])
         if desc_df.empty:
             st.info("Nessuna serie con dati disponibili.")
         else:
